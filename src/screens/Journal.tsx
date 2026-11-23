@@ -69,7 +69,7 @@ export function Journal() {
           <tfoot>
             <tr>
               <td colSpan={4}>
-                <SummaryLine t={totals(shifts)} showWage={false} />
+                <SummaryLine t={totals(shifts)} />
               </td>
             </tr>
           </tfoot>
