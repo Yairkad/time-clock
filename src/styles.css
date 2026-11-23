@@ -219,3 +219,7 @@ input, select { font: inherit; }
 .sync-badge { border: 0; background: rgba(255,255,255,.18); border-radius: 8px; padding: 2px 6px; margin-inline-start: 6px; font-size: .9rem; }
 .sync-info { display: flex; flex-direction: column; gap: 6px; }
 .form .link { align-self: center; }
+.time-input { text-align: center; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.form input.time-input.invalid { border-color: var(--danger); }
+.form input, .settings input { width: 100%; min-width: 0; }
+.row2 label { min-width: 0; }

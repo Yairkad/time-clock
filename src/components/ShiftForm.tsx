@@ -5,6 +5,7 @@ import {
 } from '../domain/calc';
 import type { Shift } from '../domain/types';
 import { Modal, useDialogs } from './Dialogs';
+import { TimeInput } from './TimeInput';
 
 interface Props {
   employerId: string;
@@ -89,14 +90,14 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
         <div className="row2">
           <label>
             שעת כניסה
-            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            <TimeInput value={startTime} onChange={setStartTime} />
           </label>
           <label>
             שעת יציאה
             {isActive ? (
               <input type="text" value="עדיין עובד" disabled />
             ) : (
-              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              <TimeInput value={endTime} onChange={setEndTime} />
             )}
           </label>
         </div>

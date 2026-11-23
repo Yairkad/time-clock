@@ -79,3 +79,20 @@ describe('split at midnight', () => {
     expect(splitAtMidnight(start, end)).toEqual([{ start, end }]);
   });
 });
+
+import { parseTime } from '../components/TimeInput';
+describe('24h time parsing', () => {
+  it('accepts common inputs', () => {
+    expect(parseTime('0830')).toBe('08:30');
+    expect(parseTime('830')).toBe('08:30');
+    expect(parseTime('8')).toBe('08:00');
+    expect(parseTime('22:5')).toBe('22:05');
+    expect(parseTime('23:59')).toBe('23:59');
+    expect(parseTime('00:00')).toBe('00:00');
+  });
+  it('rejects invalid', () => {
+    expect(parseTime('2460')).toBeNull();
+    expect(parseTime('25:00')).toBeNull();
+    expect(parseTime('')).toBeNull();
+  });
+});
