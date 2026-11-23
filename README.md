@@ -30,7 +30,12 @@ src/export/     PDF / XLSX / CSV (UTF-8 BOM)
 סנכרון: כל שינוי נשמר מקומית ונכנס לתור; התור נדחף לענן כשיש חיבור, ושינויים מהענן נמשכים
 לפי `server_updated_at` (+ Realtime לעדכון מיידי). התנגשויות: הגרסה עם `updated_at` המאוחר גוברת (נאכף גם בשרת).
 
+## גרסאות ו-APK
+GitHub Actions בונה APK בכל push. כדי לפרסם גרסה: להעלות את `version` ב-`package.json` (למשל 0.2.0) ולדחוף —
+אם אין עדיין תגית `v0.2.0`, נבנה APK חתום ומתפרסם ב-GitHub Releases, והאפליקציה מציעה לעדכן.
+מפתח החתימה נשמר ב-Secrets (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`).
+
 ## שלבים
 1. ✅ PWA מקומית מלאה
 2. ✅ Supabase: התחברות שם משתמש+סיסמה, סנכרון, RLS (ממתין למפתח)
-3. ⏳ APK (Capacitor), התראות, עדכונים דרך GitHub Releases
+3. ✅ APK (Capacitor), התראות, עדכונים דרך GitHub Releases

@@ -14,11 +14,17 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -37,6 +43,11 @@ jobs:
           V=""
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; fi
           if [ -n "$INPUT_VERSION" ]; then V="${INPUT_VERSION#v}"; fi
+          # A push whose package.json version has no release tag yet publishes that version.
+          if [ -z "$V" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            PKG=$(node -p "require('./package.json').version")
+            if ! git rev-parse -q --verify "refs/tags/v$PKG" >/dev/null; then V="$PKG"; fi
+          fi
           if [ -n "$V" ]; then
             npm version "$V" --no-git-tag-version --allow-same-version
             echo "RELEASE_VERSION=$V" >> "$GITHUB_ENV"
