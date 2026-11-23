@@ -7,7 +7,10 @@ import { DataProvider } from './data/context';
 import { SyncAdapter } from './data/syncAdapter';
 import './styles.css';
 
-registerSW({ immediate: true });
+import { isNative } from './native/platform';
+
+// The Android app ships its files inside the APK; the service worker is for the browser only.
+if (!isNative()) registerSW({ immediate: true });
 
 const adapter = new SyncAdapter();
 const root = createRoot(document.getElementById('root')!);

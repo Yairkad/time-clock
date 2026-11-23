@@ -1,7 +1,11 @@
 import { CalendarDays, Clock, Settings as SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SyncBadge } from './components/SyncPanel';
+import { useDialogs } from './components/Dialogs';
 import { useData } from './data/context';
+import { toTimeStr } from './domain/calc';
+import { syncActiveNotification } from './native/notifications';
+import { checkForUpdate, openUpdate } from './native/update';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
 import { Settings } from './screens/Settings';
@@ -24,6 +28,28 @@ export function App() {
   const employers = service.employers();
   const activeId = service.employer(service.settings().activeEmployerId)?.id ?? employers[0]?.id ?? '';
   const active = service.activeShift();
+
+  const { confirm } = useDialogs();
+  const activeEmployerName = active ? service.employer(active.employerId)?.name ?? '' : '';
+
+  // Persistent "at work" notification (Android app).
+  useEffect(() => {
+    void syncActiveNotification(active ? { employerName: activeEmployerName, startLabel: toTimeStr(active.start) } : null);
+  }, [active?.id, active?.start, activeEmployerName]);
+
+  // Check GitHub Releases for a newer APK once per launch.
+  useEffect(() => {
+    void checkForUpdate().then(async (u) => {
+      if (!u) return;
+      const ok = await confirm({
+        title: 'גרסה חדשה זמינה',
+        message: `גרסה ${u.version} זמינה (מותקנת: ${__APP_VERSION__}).`,
+        confirmText: 'עדכן עכשיו',
+        cancelText: 'מאוחר יותר',
+      });
+      if (ok) await openUpdate(u.apkUrl);
+    });
+  }, [confirm]);
 
   useEffect(() => {
     const onHash = () => setTab(fromHash());

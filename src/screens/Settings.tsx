@@ -12,10 +12,10 @@ export function Settings() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(service.settings().defaultEmployeeName);
 
-  const exportBackup = () => {
+  const exportBackup = async () => {
     const b = service.exportBackup();
     const stamp = b.exportedAt.slice(0, 16).replace(/[:T]/g, '-');
-    download(new Blob([JSON.stringify(b, null, 2)], { type: 'application/json' }), `time-clock-backup_${stamp}.json`);
+    await download(new Blob([JSON.stringify(b, null, 2)], { type: 'application/json' }), `time-clock-backup_${stamp}.json`);
   };
 
   const importBackup = async (file: File) => {

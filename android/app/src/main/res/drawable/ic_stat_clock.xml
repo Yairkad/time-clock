@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification icon: white stopwatch with check (status bar requires a white silhouette). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="512" android:viewportHeight="512">
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M238,92h36a12,12 0,0 1,12 12v16a12,12 0,0 1,-12 12h-36a12,12 0,0 1,-12 -12v-16a12,12 0,0 1,12 -12z"/>
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M256,136a140,140 0,1 1,0 280a140,140 0,1 1,0 -280zM320,234l-82,88l-42,-42l-24,24l66,66l106,-112z"/>
+</vector>

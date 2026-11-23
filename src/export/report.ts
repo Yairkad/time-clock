@@ -1,3 +1,4 @@
+import { saveFile } from '../native/files';
 import {
   formatDate, formatDecimalHours, formatHM, formatMoney, groupByDay, periodLabel, toDateKey, toTimeStr, totals,
 } from '../domain/calc';
@@ -28,14 +29,7 @@ export function fileBase(input: ReportInput) {
 }
 
 export function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return saveFile(blob, filename);
 }
 
 const HEADERS = (w: boolean) => ['תאריך', 'התחלה', 'סיום', 'סה"כ ליום', 'שעות עשרוניות', ...(w ? ['שכר ליום'] : [])];
@@ -69,7 +63,7 @@ const csvCell = (v: string | number) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-export function exportCsv(input: ReportInput) {
+export async function exportCsv(input: ReportInput) {
   const lines = [
     ...headerRows(input),
     [],
@@ -91,7 +85,7 @@ export async function exportXlsx(input: ReportInput) {
   wb.Workbook = { Views: [{ RTL: true }] };
   XLSX.utils.book_append_sheet(wb, ws, 'דוח שעות');
   const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  download(
+  await download(
     new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
     `${fileBase(input)}.xlsx`,
   );
@@ -176,7 +170,7 @@ export async function exportPdf(input: ReportInput) {
       if (i > 0) pdf.addPage();
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
     }
-    download(pdf.output('blob'), `${fileBase(input)}.pdf`);
+    await download(pdf.output('blob'), `${fileBase(input)}.pdf`);
   } finally {
     host.remove();
   }

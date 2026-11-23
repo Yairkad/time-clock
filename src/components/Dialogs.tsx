@@ -5,6 +5,7 @@ interface ConfirmOptions {
   title: string;
   message?: ReactNode;
   confirmText?: string;
+  cancelText?: string;
   danger?: boolean;
   /** If set, the user must tick this checkbox before confirming. */
   checkboxLabel?: string;
@@ -79,7 +80,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
             >
               {confirmState.confirmText ?? 'אישור'}
             </button>
-            <button className="btn" onClick={() => close(false)}>ביטול</button>
+            <button className="btn" onClick={() => close(false)}>{confirmState.cancelText ?? 'ביטול'}</button>
           </div>
         </Modal>
       )}

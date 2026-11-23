@@ -96,3 +96,13 @@ describe('24h time parsing', () => {
     expect(parseTime('')).toBeNull();
   });
 });
+
+import { isNewer } from '../native/update';
+describe('version compare', () => {
+  it('detects newer versions', () => {
+    expect(isNewer('v0.2.0', '0.1.9')).toBe(true);
+    expect(isNewer('v1.0.0', '1.0.0')).toBe(false);
+    expect(isNewer('0.1.10', '0.1.9')).toBe(true);
+    expect(isNewer('v0.1.0', '0.2.0')).toBe(false);
+  });
+});
