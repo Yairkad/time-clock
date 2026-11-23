@@ -14,7 +14,7 @@ export function Reports() {
   const [includeWage, setIncludeWage] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
 
-  if (!employer) return <div className="empty">אין מעבידים עדיין.</div>;
+  if (!employer) return <div className="empty">אין מעסיקים עדיין.</div>;
 
   const shifts = service.shifts(employer.id).filter((s) => inPeriod(s, period) && s.end !== null);
   const input: ReportInput = { employer, period, shifts, includeWage };

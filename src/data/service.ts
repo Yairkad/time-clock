@@ -62,17 +62,33 @@ export class TimeClockService {
     input: { name: string; employeeName: string; rate: number; rateFrom: string },
   ) {
     const e = this.employer(id);
-    if (!e) throw new ServiceError('המעביד לא נמצא');
+    if (!e) throw new ServiceError('המעסיק לא נמצא');
     const rates = rateOn(e, input.rateFrom) === input.rate ? e.rates : withRate(e.rates, input.rateFrom, input.rate);
-    await this.adapter.putEmployers([
-      { ...e, name: input.name.trim(), employeeName: input.employeeName.trim(), rates, updatedAt: Date.now() },
-    ]);
+    const updated = { ...e, name: input.name.trim(), employeeName: input.employeeName.trim(), rates, updatedAt: Date.now() };
+    await this.adapter.putEmployers([updated]);
+    await this.applyRates(updated);
+  }
+
+  /** How many entries a rate change from `from` would affect. */
+  entriesFrom(employerId: string, from: string): number {
+    return this.shifts(employerId).filter((x) => toDateKey(x.start) >= from).length;
+  }
+
+  /** Re-prices the employer's entries by the rate in effect on each entry's date. */
+  private async applyRates(e: Employer) {
+    const now = Date.now();
+    const changed = this.shifts(e.id)
+      .filter((x) => x.rate !== rateOn(e, toDateKey(x.start)))
+      .map((x) => ({ ...x, rate: rateOn(e, toDateKey(x.start)), updatedAt: now }));
+    if (changed.length) await this.adapter.putShifts(changed);
   }
 
   async removeRate(id: string, from: string) {
     const e = this.employer(id);
     if (!e || e.rates.length <= 1) return;
-    await this.adapter.putEmployers([{ ...e, rates: e.rates.filter((r) => r.from !== from), updatedAt: Date.now() }]);
+    const updated = { ...e, rates: e.rates.filter((r) => r.from !== from), updatedAt: Date.now() };
+    await this.adapter.putEmployers([updated]);
+    await this.applyRates(updated);
   }
 
   /** Deletes the employer and all its shifts. */
@@ -93,14 +109,14 @@ export class TimeClockService {
   /** Starts a shift now. Only one active shift is allowed overall. */
   async startShift(employerId: string): Promise<Shift> {
     const e = this.employer(employerId);
-    if (!e) throw new ServiceError('יש לבחור מעביד');
+    if (!e) throw new ServiceError('יש לבחור מעסיק');
     const active = this.activeShift();
     if (active) {
       const other = this.employer(active.employerId);
       throw new ServiceError(
         active.employerId === employerId
-          ? 'כבר קיים רישום פעיל אצל מעביד זה'
-          : `בעבודה כרגע אצל "${other?.name ?? 'מעביד אחר'}". יש לסיים אותה קודם.`,
+          ? 'כבר קיים רישום פעיל אצל מעסיק זה'
+          : `בעבודה כרגע אצל "${other?.name ?? 'מעסיק אחר'}". יש לסיים אותה קודם.`,
       );
     }
     const now = Date.now();
@@ -122,14 +138,14 @@ export class TimeClockService {
     const shift = this.s.shifts.find((x) => x.id === id);
     if (!shift || shift.end !== null) return;
     const now = Date.now();
-    await this.adapter.putShifts(this.splitRecord(shift, shift.start, Math.max(now, shift.start), shift.rate, shift.note, now));
+    await this.adapter.putShifts(this.splitRecord(shift, shift.start, Math.max(now, shift.start), shift.note, now));
   }
 
   /**
    * Builds the records for an interval, split at midnight: the first piece keeps
    * `base` (its id), the following days become new records.
    */
-  private splitRecord(base: Shift, start: number, end: number, rate: number, note: string | undefined, now: number): Shift[] {
+  private splitRecord(base: Shift, start: number, end: number, note: string | undefined, now: number): Shift[] {
     const parts = splitAtMidnight(start, end);
     if (parts.length === 0) parts.push({ start, end });
     return parts.map((p, i) => ({
@@ -137,7 +153,7 @@ export class TimeClockService {
       ...(i > 0 ? { id: uuid(), createdAt: now } : {}),
       start: p.start,
       end: p.end,
-      rate,
+      rate: this.suggestedRate(base.employerId, toDateKey(p.start)),
       note,
       updatedAt: now,
     }));
@@ -155,9 +171,9 @@ export class TimeClockService {
     if (start > Date.now() + 60_000) throw new ServiceError('לא ניתן להזין רישום שמתחיל בעתיד');
   }
 
-  async addShift(input: { employerId: string; start: number; end: number; rate?: number; note?: string }) {
+  async addShift(input: { employerId: string; start: number; end: number; note?: string }) {
     const e = this.employer(input.employerId);
-    if (!e) throw new ServiceError('יש לבחור מעביד');
+    if (!e) throw new ServiceError('יש לבחור מעסיק');
     this.validateInterval(input.start, input.end);
     const now = Date.now();
     const base: Shift = {
@@ -171,14 +187,12 @@ export class TimeClockService {
       rate: 0,
       note: undefined,
     };
-    const records = this.splitRecord(
-      base, input.start, input.end, input.rate ?? rateOn(e, toDateKey(input.start)), input.note?.trim() || undefined, now,
-    );
+    const records = this.splitRecord(base, input.start, input.end, input.note?.trim() || undefined, now);
     await this.adapter.putShifts(records);
     return records[0];
   }
 
-  async updateShift(id: string, patch: { start: number; end: number | null; rate: number; note?: string }) {
+  async updateShift(id: string, patch: { start: number; end: number | null; note?: string }) {
     const shift = this.s.shifts.find((x) => x.id === id && !x.deleted);
     if (!shift) throw new ServiceError('הרישום לא נמצא');
     if (patch.end === null && shift.end !== null) throw new ServiceError('יש להזין שעת יציאה');
@@ -187,8 +201,8 @@ export class TimeClockService {
     const now = Date.now();
     await this.adapter.putShifts(
       patch.end === null
-        ? [{ ...shift, start: patch.start, end: null, rate: patch.rate, note, updatedAt: now }]
-        : this.splitRecord(shift, patch.start, patch.end, patch.rate, note, now),
+        ? [{ ...shift, start: patch.start, end: null, rate: this.suggestedRate(shift.employerId, toDateKey(patch.start)), note, updatedAt: now }]
+        : this.splitRecord(shift, patch.start, patch.end, note, now),
     );
   }
 

@@ -14,7 +14,7 @@ export function Journal() {
   const hasActive = !!service.activeShift();
   const now = useNow(30_000, hasActive);
 
-  if (!employer) return <div className="empty">אין מעבידים עדיין.</div>;
+  if (!employer) return <div className="empty">אין מעסיקים עדיין.</div>;
 
   const all = service.shifts();
   const shifts = service.shifts(employer.id).filter((s) => inPeriod(s, period));

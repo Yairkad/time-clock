@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useDialogs } from '../components/Dialogs';
 import { SyncPanel } from '../components/SyncPanel';
+import { Employers } from './Employers';
 import { useData } from '../data/context';
 import { download } from '../export/report';
 
@@ -29,7 +30,7 @@ export function Settings() {
       message: (
         <>
           <p>כל הנתונים הנוכחיים במכשיר יוחלפו בנתוני הגיבוי.</p>
-          {d && <p>הגיבוי כולל {d.employers?.length ?? 0} מעבידים ו־{d.shifts?.length ?? 0} רישומים.</p>}
+          {d && <p>הגיבוי כולל {d.employers?.length ?? 0} מעסיקים ו־{d.shifts?.length ?? 0} רישומים.</p>}
         </>
       ),
       checkboxLabel: 'אני מבין/ה שהנתונים הנוכחיים יוחלפו',
@@ -49,6 +50,8 @@ export function Settings() {
     <div className="settings">
       <h2>הגדרות</h2>
 
+      <Employers autoOpen />
+
       <section className="card" id="sync">
         <h3>חשבון וסנכרון</h3>
         <SyncPanel />
@@ -57,19 +60,18 @@ export function Settings() {
       <section className="card">
         <h3>כללי</h3>
         <label>
-          שם עובד ברירת מחדל (למעבידים חדשים)
+          שם עובד ברירת מחדל (למעסיקים חדשים)
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => service.updateSettings({ defaultEmployeeName: name.trim() })}
           />
         </label>
-        <p className="muted small-text">שם העובד ותעריף שעתי מוגדרים לכל מעביד במסך "מעבידים".</p>
       </section>
 
       <section className="card">
         <h3>גיבוי ושחזור</h3>
-        <p className="muted small-text">קובץ JSON הכולל מעבידים, תעריפים, היסטוריית שעות, רישום פעיל והגדרות.</p>
+        <p className="muted small-text">קובץ JSON הכולל מעסיקים, תעריפים, היסטוריית שעות, רישום פעיל והגדרות.</p>
         <div className="export-buttons">
           <button className="btn primary" onClick={exportBackup}>⬇️ ייצוא גיבוי</button>
           <button className="btn" onClick={() => fileRef.current?.click()}>⬆️ ייבוא גיבוי</button>

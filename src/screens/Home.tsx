@@ -20,8 +20,8 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
     return (
       <div className="empty">
         <h2>ברוך הבא 👋</h2>
-        <p>כדי להתחיל, יש להוסיף מעביד ראשון.</p>
-        <button className="btn primary" onClick={goEmployers}>הוספת מעביד</button>
+        <p>כדי להתחיל, יש להוסיף מעסיק ראשון.</p>
+        <button className="btn primary" onClick={goEmployers}>הוספת מעסיק</button>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
               <div className="warn">
                 ⚠️ בעבודה כרגע אצל <b>{otherEmployer?.name}</b> מ־{toTimeStr(activeElsewhere.start)}
                 <button className="btn small" onClick={() => service.updateSettings({ activeEmployerId: activeElsewhere.employerId })}>
-                  מעבר למעביד זה
+                  מעבר למעסיק זה
                 </button>
               </div>
             )}

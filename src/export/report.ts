@@ -58,7 +58,7 @@ function summaryRows(input: ReportInput): (string | number)[][] {
 
 function headerRows(input: ReportInput): (string | number)[][] {
   return [
-    ['מעביד', input.employer.name],
+    ['מעסיק', input.employer.name],
     ['עובד', input.employer.employeeName],
     ['תקופה', periodLabel(input.period)],
   ];
@@ -125,7 +125,7 @@ function buildPages(input: ReportInput): HTMLElement[] {
       ${idx === 0 ? `
         <h1>דוח שעות עבודה</h1>
         <table class="pdf-meta">
-          <tr><th>מעביד</th><td>${esc(input.employer.name)}</td></tr>
+          <tr><th>מעסיק</th><td>${esc(input.employer.name)}</td></tr>
           <tr><th>עובד</th><td>${esc(input.employer.employeeName || '—')}</td></tr>
           <tr><th>תקופה</th><td>${esc(periodLabel(input.period))}</td></tr>
         </table>` : ''}

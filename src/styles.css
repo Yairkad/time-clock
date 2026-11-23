@@ -223,3 +223,5 @@ input, select { font: inherit; }
 .form input.time-input.invalid { border-color: var(--danger); }
 .form input, .settings input { width: 100%; min-width: 0; }
 .row2 label { min-width: 0; }
+.toolbar h3 { margin: 0; }
+.small-btn { padding: 8px 12px; font-size: .9rem; }

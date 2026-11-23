@@ -18,28 +18,28 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
       title: `מחיקת "${e.name}"`,
       message: (
         <>
-          <p>פעולה זו תמחק את המעביד ואת כל היסטוריית השעות שלו ({count} רישומים).</p>
-          {active && <p className="warn">⚠️ קיים רישום פעיל אצל מעביד זה.</p>}
+          <p>פעולה זו תמחק את המעסיק ואת כל היסטוריית השעות שלו ({count} רישומים).</p>
+          {active && <p className="warn">⚠️ קיים רישום פעיל אצל מעסיק זה.</p>}
           <p>מומלץ לייצא גיבוי לפני המחיקה.</p>
         </>
       ),
-      checkboxLabel: 'אני מבין/ה שכל השעות של מעביד זה יימחקו',
+      checkboxLabel: 'אני מבין/ה שכל השעות של מעסיק זה יימחקו',
       confirmText: 'מחיקה סופית',
       danger: true,
     });
     if (ok) {
       await service.deleteEmployer(e.id);
-      toast('המעביד נמחק');
+      toast('המעסיק נמחק');
     }
   };
 
   return (
-    <div>
+    <section className="card">
       <div className="toolbar">
-        <h2>מעבידים</h2>
-        <button className="btn primary" onClick={() => setForm({})}>+ מעביד חדש</button>
+        <h3>מעסיקים ותעריפים</h3>
+        <button className="btn primary small-btn" onClick={() => setForm({})}>+ מעסיק חדש</button>
       </div>
-      {employers.length === 0 && <div className="empty small">עדיין לא הוגדרו מעבידים.</div>}
+      {employers.length === 0 && <div className="empty small">עדיין לא הוגדרו מעסיקים.</div>}
       <ul className="list">
         {employers.map((e) => (
           <li key={e.id} className={`card list-item ${e.id === activeId ? 'active' : ''}`}>
@@ -55,7 +55,7 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
         ))}
       </ul>
       {form && <EmployerForm employer={form.employer} onClose={() => setForm(null)} />}
-    </div>
+    </section>
   );
 }
 
@@ -70,7 +70,7 @@ function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () 
 
   const save = async () => {
     const r = Number(rate);
-    if (!name.trim()) return toast('יש להזין שם מעביד', 'error');
+    if (!name.trim()) return toast('יש להזין שם מעסיק', 'error');
     if (!rate || !(r >= 0)) return toast('יש להזין תעריף תקין', 'error');
     if (employer) await service.updateEmployer(employer.id, { name, employeeName, rate: r, rateFrom: rateFrom || today });
     else await service.addEmployer({ name, employeeName, rate: r });
@@ -79,12 +79,13 @@ function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () 
   };
 
   const rateChanged = employer && Number(rate) !== currentRate(employer);
+  const affected = employer && rateChanged && rateFrom ? service.entriesFrom(employer.id, rateFrom) : 0;
 
   return (
-    <Modal title={employer ? 'עריכת מעביד' : 'מעביד חדש'} onClose={onClose}>
+    <Modal title={employer ? 'עריכת מעסיק' : 'מעסיק חדש'} onClose={onClose}>
       <div className="form">
         <label>
-          שם המעביד / העסק
+          שם המעסיק / העסק
           <input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
         </label>
         <label>
@@ -99,7 +100,10 @@ function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () 
           <label>
             התעריף החדש בתוקף מתאריך
             <input type="date" value={rateFrom} onChange={(e) => setRateFrom(e.target.value)} />
-            <span className="muted small-text">רישומים שכבר נשמרו ישמרו על התעריף המקורי שלהן.</span>
+            <span className="muted small-text">
+              רישומים לפני {rateFrom ? dateKeyToDisplay(rateFrom) : 'התאריך'} נשארים בתעריף הקודם.
+              {affected > 0 && ` ${affected} רישומים מתאריך זה ואילך יעודכנו לתעריף החדש.`}
+            </span>
           </label>
         )}
         {employer && employer.rates.length > 1 && (
@@ -113,7 +117,7 @@ function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () 
                     <button
                       className="link"
                       onClick={async () => {
-                        if (await confirm({ title: 'הסרת תעריף', message: 'להסיר את התעריף מההיסטוריה? רישומים קיימים לא ישתנו.' })) {
+                        if (await confirm({ title: 'הסרת תעריף', message: 'להסיר את התעריף מההיסטוריה? הרישומים בתקופה שלו יחושבו לפי התעריף הקודם.' })) {
                           await service.removeRate(employer.id, r.from);
                           onClose();
                         }

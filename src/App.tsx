@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SyncBadge } from './components/SyncPanel';
 import { useData } from './data/context';
-import { Employers } from './screens/Employers';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
 import { Reports } from './screens/Reports';
@@ -11,7 +10,6 @@ const TABS = [
   { id: 'home', label: 'ראשי', icon: '⏱️' },
   { id: 'journal', label: 'יומן', icon: '📅' },
   { id: 'reports', label: 'דוחות', icon: '📊' },
-  { id: 'employers', label: 'מעבידים', icon: '🏢' },
   { id: 'settings', label: 'הגדרות', icon: '⚙️' },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
@@ -49,7 +47,7 @@ export function App() {
           <select
             className="employer-select"
             value={activeId}
-            aria-label="מעביד פעיל"
+            aria-label="מעסיק פעיל"
             onChange={(e) => service.updateSettings({ activeEmployerId: e.target.value })}
           >
             {employers.map((e) => (
@@ -71,10 +69,9 @@ export function App() {
       </nav>
 
       <main className="content">
-        {tab === 'home' && <Home goEmployers={() => go('employers')} />}
+        {tab === 'home' && <Home goEmployers={() => go('settings')} />}
         {tab === 'journal' && <Journal />}
         {tab === 'reports' && <Reports />}
-        {tab === 'employers' && <Employers autoOpen />}
         {tab === 'settings' && <Settings />}
       </main>
     </div>
