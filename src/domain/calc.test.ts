@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  splitAtMidnight,
   buildInterval, findOverlaps, formatDecimalHours, formatHM, formatHoursWords, rateOn, totals, wage, withRate,
 } from './calc';
 import type { Shift } from './types';
@@ -59,5 +60,22 @@ describe('overlaps', () => {
     const b = buildInterval('2026-11-20', '15:00', '18:00');
     expect(findOverlaps({ start: b.start, end: b.end }, [shift('a', a.start, a.end)])).toHaveLength(0);
     expect(findOverlaps({ id: 'a', ...a }, [shift('a', a.start, a.end)])).toHaveLength(0);
+  });
+});
+
+describe('split at midnight', () => {
+  it('22:30 -> 03:15 becomes 1:30 + 3:15', () => {
+    const { start, end } = buildInterval('2026-11-18', '22:30', '03:15');
+    const parts = splitAtMidnight(start, end);
+    expect(parts.map((p) => formatHM(p.end - p.start))).toEqual(['1:30', '3:15']);
+    expect(new Date(parts[1].start).getHours()).toBe(0);
+  });
+  it('ending exactly at midnight stays one piece', () => {
+    const { start, end } = buildInterval('2026-11-18', '20:00', '00:00');
+    expect(splitAtMidnight(start, end)).toHaveLength(1);
+  });
+  it('same-day interval is untouched', () => {
+    const { start, end } = buildInterval('2026-11-18', '08:00', '16:00');
+    expect(splitAtMidnight(start, end)).toEqual([{ start, end }]);
   });
 });

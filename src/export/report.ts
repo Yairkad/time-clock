@@ -15,7 +15,7 @@ export function reportRows(input: ReportInput) {
   return groupByDay(input.shifts.filter((s) => s.end !== null), 'asc').map(({ shift: s, firstOfDay, dayTotalMs, dayWage }) => ({
     date: firstOfDay ? formatDate(s.start) : '',
     start: toTimeStr(s.start),
-    end: toTimeStr(s.end!) + (toDateKey(s.end!) !== toDateKey(s.start) ? ' (+1)' : ''),
+    end: toTimeStr(s.end!) + (toDateKey(s.end! - 1) !== toDateKey(s.start) ? ' (+1)' : ''),
     dayTotal: dayTotalMs !== undefined ? formatHM(dayTotalMs) : '',
     dayDecimal: dayTotalMs !== undefined ? Number(formatDecimalHours(dayTotalMs)) : '',
     dayWage: dayWage !== undefined ? Math.round(dayWage * 100) / 100 : '',

@@ -59,6 +59,24 @@ export function buildInterval(dateKey: string, startTime: string, endTime: strin
   return { start, end };
 }
 
+/** Local midnight that starts the day after `ms`. */
+export function nextMidnight(ms: number): number {
+  const d = new Date(ms);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+}
+
+/** Splits an interval at local midnights into one piece per calendar day. */
+export function splitAtMidnight(start: number, end: number): { start: number; end: number }[] {
+  const parts: { start: number; end: number }[] = [];
+  let s = start;
+  while (s < end) {
+    const e = Math.min(end, nextMidnight(s));
+    parts.push({ start: s, end: e });
+    s = e;
+  }
+  return parts;
+}
+
 export function durationMs(shift: Pick<Shift, 'start' | 'end'>, now = Date.now()): number {
   return Math.max(0, (shift.end ?? now) - shift.start);
 }

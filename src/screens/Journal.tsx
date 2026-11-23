@@ -44,7 +44,7 @@ export function Journal() {
             {rows.map(({ shift: s, firstOfDay, dayTotalMs }) => {
               const open = s.end === null;
               const overlap = findOverlaps(s, all, now).length > 0;
-              const nextDay = s.end !== null && toDateKey(s.end) !== toDateKey(s.start);
+              const nextDay = s.end !== null && toDateKey(s.end - 1) !== toDateKey(s.start);
               return (
                 <tr
                   key={s.id}

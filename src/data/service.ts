@@ -1,4 +1,4 @@
-import { combine, findOverlaps, rateOn, toDateKey, uuid, withRate } from '../domain/calc';
+import { combine, findOverlaps, rateOn, splitAtMidnight, toDateKey, uuid, withRate } from '../domain/calc';
 import type { BackupFile, Employer, Settings, Shift, Snapshot } from '../domain/types';
 import type { DataAdapter } from './adapter';
 
@@ -122,7 +122,25 @@ export class TimeClockService {
     const shift = this.s.shifts.find((x) => x.id === id);
     if (!shift || shift.end !== null) return;
     const now = Date.now();
-    await this.adapter.putShifts([{ ...shift, end: Math.max(now, shift.start), updatedAt: now }]);
+    await this.adapter.putShifts(this.splitRecord(shift, shift.start, Math.max(now, shift.start), shift.rate, shift.note, now));
+  }
+
+  /**
+   * Builds the records for an interval, split at midnight: the first piece keeps
+   * `base` (its id), the following days become new records.
+   */
+  private splitRecord(base: Shift, start: number, end: number, rate: number, note: string | undefined, now: number): Shift[] {
+    const parts = splitAtMidnight(start, end);
+    if (parts.length === 0) parts.push({ start, end });
+    return parts.map((p, i) => ({
+      ...base,
+      ...(i > 0 ? { id: uuid(), createdAt: now } : {}),
+      start: p.start,
+      end: p.end,
+      rate,
+      note,
+      updatedAt: now,
+    }));
   }
 
   /** Overlapping shifts (across all employers) for a proposed interval. */
@@ -142,7 +160,7 @@ export class TimeClockService {
     if (!e) throw new ServiceError('יש לבחור מעביד');
     this.validateInterval(input.start, input.end);
     const now = Date.now();
-    const shift: Shift = {
+    const base: Shift = {
       id: uuid(),
       createdAt: now,
       updatedAt: now,
@@ -150,11 +168,14 @@ export class TimeClockService {
       employerId: e.id,
       start: input.start,
       end: input.end,
-      rate: input.rate ?? rateOn(e, toDateKey(input.start)),
-      note: input.note?.trim() || undefined,
+      rate: 0,
+      note: undefined,
     };
-    await this.adapter.putShifts([shift]);
-    return shift;
+    const records = this.splitRecord(
+      base, input.start, input.end, input.rate ?? rateOn(e, toDateKey(input.start)), input.note?.trim() || undefined, now,
+    );
+    await this.adapter.putShifts(records);
+    return records[0];
   }
 
   async updateShift(id: string, patch: { start: number; end: number | null; rate: number; note?: string }) {
@@ -162,9 +183,13 @@ export class TimeClockService {
     if (!shift) throw new ServiceError('הרישום לא נמצא');
     if (patch.end === null && shift.end !== null) throw new ServiceError('יש להזין שעת יציאה');
     this.validateInterval(patch.start, patch.end);
-    await this.adapter.putShifts([
-      { ...shift, start: patch.start, end: patch.end, rate: patch.rate, note: patch.note?.trim() || undefined, updatedAt: Date.now() },
-    ]);
+    const note = patch.note?.trim() || undefined;
+    const now = Date.now();
+    await this.adapter.putShifts(
+      patch.end === null
+        ? [{ ...shift, start: patch.start, end: null, rate: patch.rate, note, updatedAt: now }]
+        : this.splitRecord(shift, patch.start, patch.end, patch.rate, note, now),
+    );
   }
 
   async deleteShift(id: string) {

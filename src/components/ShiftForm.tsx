@@ -39,7 +39,7 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
     return buildInterval(date, startTime, endTime);
   }, [date, startTime, endTime, isActive]);
 
-  const crossesMidnight = interval?.end != null && toDateKey(interval.end) !== toDateKey(interval.start);
+  const crossesMidnight = interval?.end != null && toDateKey(interval.end - 1) !== toDateKey(interval.start);
   const duration = interval ? (interval.end ?? now) - interval.start : 0;
   const rateNum = Number(rate);
   const overlaps = interval ? service.overlaps({ id: shift?.id, ...interval }) : [];
@@ -121,7 +121,12 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
 
         {interval && (
           <div className="preview">
-            {crossesMidnight && <div className="hint">🌙 הרישום עובר חצות ומסתיים ב־{formatDate(interval.end!)}</div>}
+            {crossesMidnight && (
+              <div className="hint">
+                🌙 עובר חצות — יישמר כשני רישומים: {formatDate(interval.start)} {toTimeStr(interval.start)}–00:00
+                {' '}ו־{formatDate(interval.end!)} 00:00–{toTimeStr(interval.end!)}
+              </div>
+            )}
             <div>
               משך: <b>{formatHM(duration)}</b> ({formatDecimalHours(duration)} שעות)
             </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { OverlapList, ShiftForm } from '../components/ShiftForm';
+import { OverlapList } from '../components/ShiftForm';
 import { SummaryLine } from '../components/SummaryLine';
 import { useDialogs } from '../components/Dialogs';
 import { useActiveEmployer, useData, useNow } from '../data/context';
@@ -14,7 +14,6 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
   const employer = useActiveEmployer();
   const active = service.activeShift();
   const now = useNow(1000, !!active);
-  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (!employer) {
@@ -70,8 +69,7 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
         {activeHere ? (
           <>
             <div className="clock-start">
-              התחלת: <b>{toTimeStr(activeHere.start)}</b>{' '}
-              <button className="link" onClick={() => setEditing(true)}>תיקון</button>
+              התחלת: <b>{toTimeStr(activeHere.start)}</b>
             </div>
             <div className="timer" aria-live="off">{formatHMS(durationMs(activeHere, now))}</div>
             <div className="clock-wage">
@@ -102,7 +100,6 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
         {activeHere && <p className="muted small-text">* רישום פעיל ייכלל בסיכום לאחר הסיום.</p>}
       </div>
 
-      {editing && activeHere && <ShiftForm employerId={employer.id} shift={activeHere} onClose={() => setEditing(false)} />}
     </div>
   );
 }
