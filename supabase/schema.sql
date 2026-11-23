@@ -77,7 +77,10 @@ create policy "own shifts" on public.shifts
     and exists (select 1 from public.employers e where e.id = employer_id and e.user_id = (select auth.uid()))
   );
 
+-- Table privileges for signed-in users (RLS above limits them to their own rows).
 -- Hard deletes are never used by the app (soft delete via `deleted`).
+grant usage on schema public to authenticated;
+grant select, insert, update on public.employers, public.shifts to authenticated;
 revoke delete on public.employers, public.shifts from anon, authenticated;
 revoke all on public.employers, public.shifts from anon;
 
