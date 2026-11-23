@@ -142,9 +142,8 @@ input, select { font: inherit; }
 .list-title { font-weight: 700; }
 
 /* Forms & modal */
-.overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
-.modal { background: var(--card); width: 100%; max-width: 480px; max-height: 92vh; overflow: auto; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
-@media (min-width: 640px) { .overlay { align-items: center; } .modal { border-radius: 18px; } }
+.overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal { background: var(--card); width: 100%; max-width: 480px; max-height: calc(100dvh - 32px); overflow: auto; border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .modal-head h2 { margin: 0; font-size: 1.15rem; }
 .modal-body p { margin: 6px 0; }
