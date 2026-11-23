@@ -28,7 +28,7 @@ export function Settings() {
       message: (
         <>
           <p>כל הנתונים הנוכחיים במכשיר יוחלפו בנתוני הגיבוי.</p>
-          {d && <p>הגיבוי כולל {d.employers?.length ?? 0} מעבידים ו־{d.shifts?.length ?? 0} משמרות.</p>}
+          {d && <p>הגיבוי כולל {d.employers?.length ?? 0} מעבידים ו־{d.shifts?.length ?? 0} רישומים.</p>}
         </>
       ),
       checkboxLabel: 'אני מבין/ה שהנתונים הנוכחיים יוחלפו',
@@ -63,7 +63,7 @@ export function Settings() {
 
       <section className="card">
         <h3>גיבוי ושחזור</h3>
-        <p className="muted small-text">קובץ JSON הכולל מעבידים, תעריפים, היסטוריית משמרות, משמרת פעילה והגדרות.</p>
+        <p className="muted small-text">קובץ JSON הכולל מעבידים, תעריפים, היסטוריית שעות, רישום פעיל והגדרות.</p>
         <div className="export-buttons">
           <button className="btn primary" onClick={exportBackup}>⬇️ ייצוא גיבוי</button>
           <button className="btn" onClick={() => fileRef.current?.click()}>⬆️ ייבוא גיבוי</button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
-import { SummaryCards } from '../components/SummaryCards';
+import { SummaryLine } from '../components/SummaryLine';
 import { useDialogs } from '../components/Dialogs';
 import { useActiveEmployer, useData } from '../data/context';
 import { inPeriod, totals } from '../domain/calc';
@@ -35,7 +35,7 @@ export function Reports() {
     <div>
       <h2>דוחות — {employer.name}</h2>
       <PeriodPicker value={period} onChange={setPeriod} />
-      <SummaryCards t={totals(shifts)} showWage={includeWage} />
+      <div className="card"><SummaryLine t={totals(shifts)} showWage={includeWage} /></div>
       <label className="check">
         <input type="checkbox" checked={includeWage} onChange={(e) => setIncludeWage(e.target.checked)} />
         כולל חישוב שכר
@@ -51,7 +51,7 @@ export function Reports() {
           📋 CSV
         </button>
       </div>
-      {shifts.length === 0 && <p className="muted">אין משמרות סגורות בתקופה שנבחרה.</p>}
+      {shifts.length === 0 && <p className="muted">אין רישומים בתקופה שנבחרה.</p>}
     </div>
   );
 }

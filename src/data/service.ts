@@ -99,8 +99,8 @@ export class TimeClockService {
       const other = this.employer(active.employerId);
       throw new ServiceError(
         active.employerId === employerId
-          ? 'כבר קיימת משמרת פעילה אצל מעביד זה'
-          : `קיימת משמרת פעילה אצל "${other?.name ?? 'מעביד אחר'}". יש לסיים אותה קודם.`,
+          ? 'כבר קיים רישום פעיל אצל מעביד זה'
+          : `בעבודה כרגע אצל "${other?.name ?? 'מעביד אחר'}". יש לסיים אותה קודם.`,
       );
     }
     const now = Date.now();
@@ -133,8 +133,8 @@ export class TimeClockService {
   validateInterval(start: number, end: number | null) {
     if (Number.isNaN(start) || (end !== null && Number.isNaN(end))) throw new ServiceError('תאריך או שעה לא תקינים');
     if (end !== null && end <= start) throw new ServiceError('שעת היציאה חייבת להיות אחרי שעת הכניסה');
-    if (end !== null && end - start > 24 * 3_600_000) throw new ServiceError('משמרת לא יכולה להיות ארוכה מ־24 שעות');
-    if (start > Date.now() + 60_000) throw new ServiceError('לא ניתן להזין משמרת שמתחילה בעתיד');
+    if (end !== null && end - start > 24 * 3_600_000) throw new ServiceError('רישום לא יכול להיות ארוך מ־24 שעות');
+    if (start > Date.now() + 60_000) throw new ServiceError('לא ניתן להזין רישום שמתחיל בעתיד');
   }
 
   async addShift(input: { employerId: string; start: number; end: number; rate?: number; note?: string }) {
@@ -159,7 +159,7 @@ export class TimeClockService {
 
   async updateShift(id: string, patch: { start: number; end: number | null; rate: number; note?: string }) {
     const shift = this.s.shifts.find((x) => x.id === id && !x.deleted);
-    if (!shift) throw new ServiceError('המשמרת לא נמצאה');
+    if (!shift) throw new ServiceError('הרישום לא נמצא');
     if (patch.end === null && shift.end !== null) throw new ServiceError('יש להזין שעת יציאה');
     this.validateInterval(patch.start, patch.end);
     await this.adapter.putShifts([

@@ -1,6 +1,5 @@
 import {
-  durationMs, formatDate, formatDecimalHours, formatHM, formatMoney, msToHours, periodLabel, toDateKey, toTimeStr,
-  totals, wage,
+  formatDate, formatDecimalHours, formatHM, formatMoney, groupByDay, periodLabel, toDateKey, toTimeStr, totals,
 } from '../domain/calc';
 import type { Employer, Period, Shift } from '../domain/types';
 
@@ -13,24 +12,14 @@ export interface ReportInput {
 }
 
 export function reportRows(input: ReportInput) {
-  return [...input.shifts]
-    .filter((s) => s.end !== null)
-    .sort((a, b) => a.start - b.start)
-    .map((s) => {
-      const ms = durationMs(s);
-      return {
-        date: formatDate(s.start),
-        dateKey: toDateKey(s.start),
-        start: toTimeStr(s.start),
-        end: toTimeStr(s.end!) + (toDateKey(s.end!) !== toDateKey(s.start) ? ' (+1)' : ''),
-        duration: formatHM(ms),
-        decimal: Number(formatDecimalHours(ms)),
-        hours: msToHours(ms),
-        rate: s.rate,
-        wage: Math.round(wage(s) * 100) / 100,
-        note: s.note ?? '',
-      };
-    });
+  return groupByDay(input.shifts.filter((s) => s.end !== null), 'asc').map(({ shift: s, firstOfDay, dayTotalMs, dayWage }) => ({
+    date: firstOfDay ? formatDate(s.start) : '',
+    start: toTimeStr(s.start),
+    end: toTimeStr(s.end!) + (toDateKey(s.end!) !== toDateKey(s.start) ? ' (+1)' : ''),
+    dayTotal: dayTotalMs !== undefined ? formatHM(dayTotalMs) : '',
+    dayDecimal: dayTotalMs !== undefined ? Number(formatDecimalHours(dayTotalMs)) : '',
+    dayWage: dayWage !== undefined ? Math.round(dayWage * 100) / 100 : '',
+  }));
 }
 
 export function fileBase(input: ReportInput) {
@@ -49,18 +38,18 @@ export function download(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-const HEADERS = (w: boolean) => ['תאריך', 'כניסה', 'יציאה', 'משך', 'שעות עשרוניות', ...(w ? ['תעריף', 'שכר'] : []), 'הערה'];
+const HEADERS = (w: boolean) => ['תאריך', 'התחלה', 'סיום', 'סה"כ ליום', 'שעות עשרוניות', ...(w ? ['שכר ליום'] : [])];
 
 function tableRows(input: ReportInput): (string | number)[][] {
   return reportRows(input).map((r) => [
-    r.date, r.start, r.end, r.duration, r.decimal, ...(input.includeWage ? [r.rate, r.wage] : []), r.note,
+    r.date, r.start, r.end, r.dayTotal, r.dayDecimal, ...(input.includeWage ? [r.dayWage] : []),
   ]);
 }
 
 function summaryRows(input: ReportInput): (string | number)[][] {
   const t = totals(input.shifts);
   return [
-    ['מספר משמרות', t.count],
+    ['ימי עבודה', t.days],
     ['סך שעות', formatHM(t.ms)],
     ['סך שעות עשרוניות', Number(formatDecimalHours(t.ms))],
     ...(input.includeWage ? [['סך לתשלום', Math.round(t.wage * 100) / 100]] : []),
@@ -97,7 +86,7 @@ export async function exportXlsx(input: ReportInput) {
   const XLSX = await import('xlsx');
   const aoa = [...headerRows(input), [], HEADERS(input.includeWage), ...tableRows(input), [], ...summaryRows(input)];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = HEADERS(input.includeWage).map((h) => ({ wch: h === 'הערה' ? 24 : 14 }));
+  ws['!cols'] = HEADERS(input.includeWage).map(() => ({ wch: 14 }));
   const wb = XLSX.utils.book_new();
   wb.Workbook = { Views: [{ RTL: true }] };
   XLSX.utils.book_append_sheet(wb, ws, 'דוח שעות');
@@ -142,21 +131,21 @@ function buildPages(input: ReportInput): HTMLElement[] {
         </table>` : ''}
       <table class="pdf-table">
         <thead><tr>
-          <th>תאריך</th><th>כניסה</th><th>יציאה</th><th>משך</th><th>עשרוני</th>
-          ${w ? '<th>תעריף</th><th>שכר</th>' : ''}
+          <th>תאריך</th><th>התחלה</th><th>סיום</th><th>סה"כ ליום</th><th>עשרוני</th>
+          ${w ? '<th>שכר ליום</th>' : ''}
         </tr></thead>
         <tbody>
-          ${chunk.map((r) => `<tr>
+          ${chunk.map((r) => `<tr class="${r.date ? 'day-start' : ''}">
             <td>${esc(r.date)}</td><td>${esc(r.start)}</td><td>${esc(r.end)}</td>
-            <td>${esc(r.duration)}</td><td>${r.decimal.toFixed(2)}</td>
-            ${w ? `<td>${esc(formatMoney(r.rate))}</td><td>${esc(formatMoney(r.wage))}</td>` : ''}
+            <td><b>${esc(r.dayTotal)}</b></td><td>${typeof r.dayDecimal === 'number' ? r.dayDecimal.toFixed(2) : ''}</td>
+            ${w ? `<td>${typeof r.dayWage === 'number' ? esc(formatMoney(r.dayWage)) : ''}</td>` : ''}
           </tr>`).join('')}
-          ${chunk.length === 0 ? `<tr><td colspan="${w ? 7 : 5}">אין משמרות בתקופה</td></tr>` : ''}
+          ${chunk.length === 0 ? `<tr><td colspan="${w ? 6 : 5}">אין רישומים בתקופה</td></tr>` : ''}
         </tbody>
       </table>
       ${last ? `
         <table class="pdf-summary">
-          <tr><th>מספר משמרות</th><td>${t.count}</td></tr>
+          <tr><th>ימי עבודה</th><td>${t.days}</td></tr>
           <tr><th>סך שעות</th><td>${formatHM(t.ms)}</td></tr>
           <tr><th>סך שעות עשרוניות</th><td>${formatDecimalHours(t.ms)}</td></tr>
           ${w ? `<tr class="total"><th>סך לתשלום</th><td>${esc(formatMoney(t.wage))}</td></tr>` : ''}

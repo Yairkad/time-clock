@@ -198,3 +198,22 @@ input, select { font: inherit; }
   .shifts td { align-items: center; gap: 8px; }
   .shifts td .v { text-align: end; }
 }
+
+/* Compact hours table */
+.hours { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-top: 12px; font-variant-numeric: tabular-nums; }
+.hours th { background: #f9fafb; color: var(--muted); font-size: .82rem; font-weight: 600; text-align: start; padding: 8px 10px; }
+.hours td { padding: 9px 10px; border-top: 1px solid #f1f3f5; white-space: nowrap; }
+.hours tr.day-start td { border-top: 1px solid var(--border); }
+.hours tbody tr { cursor: pointer; }
+.hours tbody tr:hover { background: #f9fafb; }
+.hours tr.open { background: #ecfdf5; }
+.hours td:first-child { font-weight: 600; }
+.hours td.total { font-weight: 700; }
+.hours tfoot td { background: #f0fdfa; border-top: 2px solid var(--accent); padding: 10px; }
+.hours sup { color: var(--muted); font-size: .7rem; }
+.live { color: #166534; font-weight: 700; }
+.dot-warn { color: #d97706; margin-inline-start: 4px; font-size: .85rem; }
+.summary-line { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; }
+.home-summary { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.btn.danger-outline { color: var(--danger); border-color: var(--danger); }
+.pdf-table tr.day-start td { border-top: 1px solid #bbb; }

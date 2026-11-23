@@ -151,6 +151,8 @@ export function inPeriod(shift: Shift, period: Period): boolean {
 
 export interface Totals {
   count: number;
+  /** Distinct work days (by start date). */
+  days: number;
   ms: number;
   wage: number;
 }
@@ -160,13 +162,15 @@ export function totals(shifts: Shift[]): Totals {
   let ms = 0;
   let w = 0;
   let count = 0;
+  const days = new Set<string>();
   for (const s of shifts) {
     if (s.deleted || s.end === null) continue;
     count++;
+    days.add(toDateKey(s.start));
     ms += durationMs(s);
     w += wage(s);
   }
-  return { count, ms, wage: w };
+  return { count, days: days.size, ms, wage: w };
 }
 
 export function monthPeriod(year: number, month0: number): Period {
@@ -200,6 +204,41 @@ export function periodLabel(p: Period): string {
   const m = monthPeriod(fy, fm - 1);
   if (m.from === p.from && m.to === p.to) return `${HEB_MONTHS[fm - 1]} ${fy}`;
   return `${dateKeyToDisplay(p.from)} – ${dateKeyToDisplay(p.to)}`;
+}
+
+export interface DayRow {
+  shift: Shift;
+  /** First entry of its day (show the date). */
+  firstOfDay: boolean;
+  /** Set on the last entry of its day: total for that day (closed entries + open entry up to now). */
+  dayTotalMs?: number;
+  dayWage?: number;
+}
+
+/** Entries sorted by start, grouped by day, with a daily total on each day's last row. */
+export function groupByDay(shifts: Shift[], order: 'asc' | 'desc' = 'asc', now = Date.now()): DayRow[] {
+  const sorted = shifts.filter((s) => !s.deleted).sort((a, b) => a.start - b.start);
+  const byDay = new Map<string, Shift[]>();
+  for (const s of sorted) {
+    const k = toDateKey(s.start);
+    byDay.set(k, [...(byDay.get(k) ?? []), s]);
+  }
+  const keys = [...byDay.keys()];
+  if (order === 'desc') keys.reverse();
+  const rows: DayRow[] = [];
+  for (const k of keys) {
+    const list = byDay.get(k)!;
+    list.forEach((s, i) => {
+      const last = i === list.length - 1;
+      rows.push({
+        shift: s,
+        firstOfDay: i === 0,
+        dayTotalMs: last ? list.reduce((a, x) => a + durationMs(x, now), 0) : undefined,
+        dayWage: last ? list.reduce((a, x) => a + wage(x, now), 0) : undefined,
+      });
+    });
+  }
+  return rows;
 }
 
 export { MS_DAY, MS_HOUR };

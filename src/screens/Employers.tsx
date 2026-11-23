@@ -18,8 +18,8 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
       title: `מחיקת "${e.name}"`,
       message: (
         <>
-          <p>פעולה זו תמחק את המעביד ואת כל היסטוריית השעות שלו ({count} משמרות).</p>
-          {active && <p className="warn">⚠️ קיימת משמרת פעילה אצל מעביד זה.</p>}
+          <p>פעולה זו תמחק את המעביד ואת כל היסטוריית השעות שלו ({count} רישומים).</p>
+          {active && <p className="warn">⚠️ קיים רישום פעיל אצל מעביד זה.</p>}
           <p>מומלץ לייצא גיבוי לפני המחיקה.</p>
         </>
       ),
@@ -99,7 +99,7 @@ function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () 
           <label>
             התעריף החדש בתוקף מתאריך
             <input type="date" value={rateFrom} onChange={(e) => setRateFrom(e.target.value)} />
-            <span className="muted small-text">משמרות שכבר נשמרו ישמרו על התעריף המקורי שלהן.</span>
+            <span className="muted small-text">רישומים שכבר נשמרו ישמרו על התעריף המקורי שלהן.</span>
           </label>
         )}
         {employer && employer.rates.length > 1 && (
@@ -113,7 +113,7 @@ function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () 
                     <button
                       className="link"
                       onClick={async () => {
-                        if (await confirm({ title: 'הסרת תעריף', message: 'להסיר את התעריף מההיסטוריה? משמרות קיימות לא ישתנו.' })) {
+                        if (await confirm({ title: 'הסרת תעריף', message: 'להסיר את התעריף מההיסטוריה? רישומים קיימים לא ישתנו.' })) {
                           await service.removeRate(employer.id, r.from);
                           onClose();
                         }

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { OverlapList, ShiftForm } from '../components/ShiftForm';
-import { SummaryCards } from '../components/SummaryCards';
+import { SummaryLine } from '../components/SummaryLine';
 import { useDialogs } from '../components/Dialogs';
 import { useActiveEmployer, useData, useNow } from '../data/context';
 import {
-  currentMonthPeriod, currentRate, durationMs, formatDecimalHours, formatHM, formatHMS, formatMoney, inPeriod,
+  currentMonthPeriod, currentRate, durationMs, formatHM, formatHMS, formatMoney, inPeriod,
   todayPeriod, toTimeStr, totals, wage,
 } from '../domain/calc';
 
@@ -36,7 +36,7 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
 
   const start = async () => {
     if (activeElsewhere) {
-      toast(`קיימת משמרת פעילה אצל "${otherEmployer?.name}". יש לסיים אותה קודם.`, 'error');
+      toast(`בעבודה כרגע אצל "${otherEmployer?.name}". יש לסיים אותה קודם.`, 'error');
       return;
     }
     setBusy(true);
@@ -52,12 +52,12 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
   const end = async () => {
     if (!activeHere) return;
     const overlaps = service.overlaps({ id: activeHere.id, start: activeHere.start, end: Date.now() });
-    if (overlaps.length && !(await confirm({ title: 'חפיפה בין משמרות', message: <OverlapList shifts={overlaps} />, confirmText: 'סיים בכל זאת' }))) return;
+    if (overlaps.length && !(await confirm({ title: 'חפיפה בין רישומים', message: <OverlapList shifts={overlaps} />, confirmText: 'סיום בכל זאת' }))) return;
     setBusy(true);
     try {
       await service.endShift(activeHere.id);
       const ms = Date.now() - activeHere.start;
-      toast(`המשמרת הסתיימה: ${formatHM(ms)} שעות`);
+      toast(`הרישום הסתיים: ${formatHM(ms)} שעות`);
     } finally {
       setBusy(false);
     }
@@ -77,41 +77,30 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
             <div className="clock-wage">
               שכר מצטבר: <b>{formatMoney(wage(activeHere, now))}</b>
             </div>
-            <button className="big-btn stop" onClick={end} disabled={busy}>סיים משמרת</button>
+            <button className="big-btn stop" onClick={end} disabled={busy}>סיום</button>
           </>
         ) : (
           <>
-            <div className="clock-idle">אין משמרת פעילה</div>
+            <div className="clock-idle">לא בעבודה כרגע</div>
             <div className="clock-rate">תעריף: {formatMoney(currentRate(employer))} לשעה</div>
             {activeElsewhere && (
               <div className="warn">
-                ⚠️ קיימת משמרת פעילה אצל <b>{otherEmployer?.name}</b> מ־{toTimeStr(activeElsewhere.start)}
+                ⚠️ בעבודה כרגע אצל <b>{otherEmployer?.name}</b> מ־{toTimeStr(activeElsewhere.start)}
                 <button className="btn small" onClick={() => service.updateSettings({ activeEmployerId: activeElsewhere.employerId })}>
                   מעבר למעביד זה
                 </button>
               </div>
             )}
-            <button className="big-btn go" onClick={start} disabled={busy || !!activeElsewhere}>התחל משמרת</button>
+            <button className="big-btn go" onClick={start} disabled={busy || !!activeElsewhere}>התחלה</button>
           </>
         )}
       </section>
 
-      <h3 className="section-title">היום</h3>
-      <div className="cards compact">
-        <div className="card stat">
-          <div className="stat-label">שעות היום</div>
-          <div className="stat-value">{formatHM(today.ms)}</div>
-          <div className="stat-sub">{formatDecimalHours(today.ms)} שעות</div>
-        </div>
-        <div className="card stat">
-          <div className="stat-label">שכר היום</div>
-          <div className="stat-value">{formatMoney(today.wage)}</div>
-        </div>
+      <div className="card home-summary">
+        <SummaryLine t={today} label="היום:" showDays={false} />
+        <SummaryLine t={month} label="החודש:" />
+        {activeHere && <p className="muted small-text">* רישום פעיל ייכלל בסיכום לאחר הסיום.</p>}
       </div>
-
-      <h3 className="section-title">החודש</h3>
-      <SummaryCards t={month} />
-      {activeHere && <p className="muted small-text">* משמרת פעילה אינה נכללת בסיכומים עד לסיומה.</p>}
 
       {editing && activeHere && <ShiftForm employerId={employer.id} shift={activeHere} onClose={() => setEditing(false)} />}
     </div>

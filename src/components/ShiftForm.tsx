@@ -49,7 +49,7 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
     if (!(rateNum >= 0)) return toast('תעריף לא תקין', 'error');
     if (overlaps.length) {
       const ok = await confirm({
-        title: 'חפיפה בין משמרות',
+        title: 'חפיפה בין רישומים',
         message: <OverlapList shifts={overlaps} />,
         confirmText: 'שמור בכל זאת',
       });
@@ -58,15 +58,29 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
     try {
       if (shift) await service.updateShift(shift.id, { ...interval, rate: rateNum, note });
       else await service.addShift({ employerId, start: interval.start, end: interval.end!, rate: rateNum, note });
-      toast(shift ? 'המשמרת עודכנה' : 'המשמרת נוספה');
+      toast(shift ? 'הרישום עודכן' : 'הרישום נוסף');
       onClose();
     } catch (e) {
       toast((e as Error).message, 'error');
     }
   };
 
+  const remove = async () => {
+    if (!shift) return;
+    const ok = await confirm({
+      title: 'מחיקת רישום',
+      message: `למחוק את הרישום מ־${formatDate(shift.start)} ${toTimeStr(shift.start)}?`,
+      confirmText: 'מחיקה',
+      danger: true,
+    });
+    if (!ok) return;
+    await service.deleteShift(shift.id);
+    toast('הרישום נמחק');
+    onClose();
+  };
+
   return (
-    <Modal title={shift ? 'עריכת משמרת' : 'הוספת משמרת'} onClose={onClose}>
+    <Modal title={shift ? 'עריכת רישום' : 'הוספת רישום'} onClose={onClose}>
       <div className="form">
         <label>
           תאריך
@@ -107,19 +121,22 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
 
         {interval && (
           <div className="preview">
-            {crossesMidnight && <div className="hint">🌙 המשמרת עוברת חצות ומסתיימת ב־{formatDate(interval.end!)}</div>}
+            {crossesMidnight && <div className="hint">🌙 הרישום עובר חצות ומסתיים ב־{formatDate(interval.end!)}</div>}
             <div>
               משך: <b>{formatHM(duration)}</b> ({formatDecimalHours(duration)} שעות)
             </div>
             <div>
               שכר: <b>{formatMoney(msToHours(duration) * (rateNum || 0))}</b>
             </div>
-            {overlaps.length > 0 && <div className="warn">⚠️ חופפת ל־{overlaps.length} משמרות אחרות</div>}
+            {overlaps.length > 0 && <div className="warn">⚠️ חופף ל־{overlaps.length} רישומים אחרים</div>}
           </div>
         )}
       </div>
       <div className="actions">
         <button className="btn primary" onClick={save}>שמירה</button>
+        {shift && !isActive && (
+          <button className="btn danger-outline" onClick={remove}>מחיקה</button>
+        )}
         <button className="btn" onClick={onClose}>ביטול</button>
       </div>
     </Modal>
@@ -130,7 +147,7 @@ export function OverlapList({ shifts }: { shifts: Shift[] }) {
   const { service } = useData();
   return (
     <div>
-      <p>המשמרת חופפת למשמרות הבאות:</p>
+      <p>הרישום חופף לרישומים הבאים:</p>
       <ul className="overlap-list">
         {shifts.map((s) => (
           <li key={s.id}>
