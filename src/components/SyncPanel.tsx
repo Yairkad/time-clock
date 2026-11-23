@@ -13,7 +13,7 @@ const STATE_LABEL: Record<string, string> = {
 export function SyncPanel() {
   const { sync, status } = useSync();
   const { toast, confirm } = useDialogs();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [busy, setBusy] = useState(false);
@@ -36,13 +36,16 @@ export function SyncPanel() {
   if (status.state === 'signed-out') {
     const submit = () =>
       run(async () => {
-        if (!email.trim() || !password) throw new Error('יש למלא מייל וסיסמה');
+        if (!username.trim() || !password) throw new Error('יש למלא שם משתמש וסיסמה');
         if (mode === 'in') {
-          await sync.signIn(email.trim(), password);
+          await sync.signIn(username, password);
           toast('התחברת בהצלחה');
-        } else if (await sync.signUp(email.trim(), password)) {
-          toast('נשלח מייל אימות. יש ללחוץ על הקישור ואז להתחבר.');
-          setMode('in');
+        } else {
+          if (password.length < 6) throw new Error('הסיסמה חייבת להכיל לפחות 6 תווים');
+          if (await sync.signUp(username, password)) {
+            throw new Error('החשבון נוצר אך דורש אימות מייל — יש לכבות את "Confirm email" ב-Supabase');
+          }
+          toast('החשבון נוצר ואתה מחובר');
         }
       });
     return (
@@ -59,8 +62,16 @@ export function SyncPanel() {
           <button type="button" className={mode === 'up' ? 'on' : ''} onClick={() => setMode('up')}>הרשמה</button>
         </div>
         <label>
-          מייל
-          <input type="email" autoComplete="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} />
+          שם משתמש
+          <input
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            dir="ltr"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="באנגלית, לדוגמה: yair"
+          />
         </label>
         <label>
           סיסמה
@@ -73,21 +84,6 @@ export function SyncPanel() {
           />
         </label>
         <button className="btn primary" disabled={busy}>{busy ? '…' : mode === 'in' ? 'התחברות' : 'יצירת חשבון'}</button>
-        {mode === 'in' && (
-          <button
-            type="button"
-            className="link"
-            onClick={() =>
-              run(async () => {
-                if (!email.trim()) throw new Error('יש להזין מייל');
-                await sync.resetPassword(email.trim());
-                toast('נשלח מייל לאיפוס סיסמה');
-              })
-            }
-          >
-            שכחתי סיסמה
-          </button>
-        )}
       </form>
     );
   }

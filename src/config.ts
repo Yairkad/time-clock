@@ -6,3 +6,6 @@ export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ukdoty
 export const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || '';
 
 export const cloudConfigured = () => !!SUPABASE_URL && !!SUPABASE_KEY;
+
+/** Usernames are mapped to internal addresses on this domain (no emails are sent). */
+export const USERNAME_DOMAIN = 'timeclock.local';

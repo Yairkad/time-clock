@@ -1,5 +1,5 @@
 import { createClient, type RealtimeChannel, type Session, type SupabaseClient } from '@supabase/supabase-js';
-import { SUPABASE_KEY, SUPABASE_URL, cloudConfigured } from '../config';
+import { SUPABASE_KEY, SUPABASE_URL, USERNAME_DOMAIN, cloudConfigured } from '../config';
 import type { Employer, Settings, Shift, Snapshot } from '../domain/types';
 import type { DataAdapter } from './adapter';
 import { LocalAdapter } from './localAdapter';
@@ -18,6 +18,7 @@ export type SyncState = 'disabled' | 'signed-out' | 'offline' | 'syncing' | 'syn
 
 export interface SyncStatus {
   state: SyncState;
+  /** Display name: the username (or the email, for real email accounts). */
   email: string | null;
   pending: number;
   lastSyncAt: number | null;
@@ -152,7 +153,7 @@ export class SyncAdapter implements DataAdapter {
       ...this.status,
       pending: this.meta.dirtyEmployers.length + this.meta.dirtyShifts.length,
       lastSyncAt: this.meta.lastSyncAt,
-      email: this.session?.user.email ?? null,
+      email: displayName(this.session?.user.email),
       ...patch,
     };
     this.statusListeners.forEach((l) => l());
@@ -164,22 +165,17 @@ export class SyncAdapter implements DataAdapter {
   }
 
   // ---- Auth ----
-  async signIn(email: string, password: string) {
+  async signIn(username: string, password: string) {
     if (!this.client) throw new Error('הענן לא מוגדר');
-    const { error } = await this.client.auth.signInWithPassword({ email, password });
+    const { error } = await this.client.auth.signInWithPassword({ email: toAuthEmail(username), password });
     if (error) throw new Error(authMessage(error.message));
   }
   /** Returns true if the user must confirm their email first. */
-  async signUp(email: string, password: string): Promise<boolean> {
+  async signUp(username: string, password: string): Promise<boolean> {
     if (!this.client) throw new Error('הענן לא מוגדר');
-    const { data, error } = await this.client.auth.signUp({ email, password });
+    const { data, error } = await this.client.auth.signUp({ email: toAuthEmail(username), password });
     if (error) throw new Error(authMessage(error.message));
     return !data.session;
-  }
-  async resetPassword(email: string) {
-    if (!this.client) return;
-    const { error } = await this.client.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-    if (error) throw new Error(authMessage(error.message));
   }
   /** Signs out; optionally wipes this device's data. */
   async signOut(clearLocal: boolean) {
@@ -345,13 +341,30 @@ export class SyncAdapter implements DataAdapter {
   }
 }
 
+/** Accepts a username (English letters, digits, . _ -) or a full email address. */
+export function toAuthEmail(input: string): string {
+  const v = input.trim().toLowerCase();
+  if (v.includes('@')) return v;
+  if (!/^[a-z0-9][a-z0-9._-]{1,29}$/.test(v)) {
+    throw new Error('שם משתמש: 2–30 תווים באנגלית, ספרות או . _ -');
+  }
+  return `${v}@${USERNAME_DOMAIN}`;
+}
+
+function displayName(email: string | undefined): string | null {
+  if (!email) return null;
+  const suffix = '@' + USERNAME_DOMAIN;
+  return email.endsWith(suffix) ? email.slice(0, -suffix.length) : email;
+}
+
 function authMessage(msg: string): string {
   const m = msg.toLowerCase();
-  if (m.includes('invalid login')) return 'מייל או סיסמה שגויים';
-  if (m.includes('email not confirmed')) return 'יש לאשר את המייל (נשלח קישור לתיבת הדואר)';
-  if (m.includes('already registered')) return 'המייל כבר רשום — יש להתחבר';
+  if (m.includes('invalid login')) return 'שם משתמש או סיסמה שגויים';
+  if (m.includes('email not confirmed')) return 'יש לכבות את "Confirm email" בהגדרות Supabase';
+  if (m.includes('already registered')) return 'שם המשתמש תפוס — יש להתחבר או לבחור שם אחר';
   if (m.includes('password should be')) return 'הסיסמה חייבת להכיל לפחות 6 תווים';
   if (m.includes('rate limit')) return 'יותר מדי ניסיונות, נסה שוב מאוחר יותר';
   if (m.includes('fetch')) return 'אין חיבור לשרת';
+  if (m.includes('signups not allowed')) return 'ההרשמה סגורה בהגדרות Supabase';
   return msg;
 }

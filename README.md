@@ -23,12 +23,14 @@ src/export/     PDF / XLSX / CSV (UTF-8 BOM)
 ## ענן (Supabase)
 1. להריץ את `supabase/schema.sql` ב-SQL Editor של הפרויקט (פעם אחת).
 2. להגדיר את ה-Publishable key ב-`src/config.ts` (או `VITE_SUPABASE_KEY` בזמן build).
-3. Authentication → URL Configuration: להגדיר Site URL לכתובת האפליקציה (לקישורי אימות מייל).
+3. Authentication → Sign In / Providers → Email: לכבות את "Confirm email".
+   ההתחברות היא בשם משתמש + סיסמה; שם המשתמש ממופה לכתובת פנימית `user@timeclock.local` (לא נשלחים מיילים).
+   איפוס סיסמה: מ-Dashboard → Authentication → Users.
 
 סנכרון: כל שינוי נשמר מקומית ונכנס לתור; התור נדחף לענן כשיש חיבור, ושינויים מהענן נמשכים
 לפי `server_updated_at` (+ Realtime לעדכון מיידי). התנגשויות: הגרסה עם `updated_at` המאוחר גוברת (נאכף גם בשרת).
 
 ## שלבים
 1. ✅ PWA מקומית מלאה
-2. ✅ Supabase: התחברות מייל+סיסמה, סנכרון, RLS (ממתין למפתח)
+2. ✅ Supabase: התחברות שם משתמש+סיסמה, סנכרון, RLS (ממתין למפתח)
 3. ⏳ APK (Capacitor), התראות, עדכונים דרך GitHub Releases
