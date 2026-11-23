@@ -4,12 +4,12 @@ import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import { DialogProvider } from './components/Dialogs';
 import { DataProvider } from './data/context';
-import { LocalAdapter } from './data/localAdapter';
+import { SyncAdapter } from './data/syncAdapter';
 import './styles.css';
 
 registerSW({ immediate: true });
 
-const adapter = new LocalAdapter();
+const adapter = new SyncAdapter();
 const root = createRoot(document.getElementById('root')!);
 
 adapter
@@ -17,7 +17,7 @@ adapter
   .then(() =>
     root.render(
       <StrictMode>
-        <DataProvider adapter={adapter}>
+        <DataProvider adapter={adapter} sync={adapter}>
           <DialogProvider>
             <App />
           </DialogProvider>

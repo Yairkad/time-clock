@@ -86,6 +86,14 @@ export class LocalAdapter implements DataAdapter {
     this.emit();
   }
 
+  async getMeta<T>(key: string): Promise<T | undefined> {
+    return (await this.db.get('meta', key)) as T | undefined;
+  }
+
+  async putMeta(key: string, value: unknown) {
+    await this.db.put('meta', value, key);
+  }
+
   async replaceAll(snapshot: Snapshot) {
     const tx = this.db.transaction(['employers', 'shifts', 'meta'], 'readwrite');
     const emp = tx.objectStore('employers');

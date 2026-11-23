@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useDialogs } from '../components/Dialogs';
+import { SyncPanel } from '../components/SyncPanel';
 import { useData } from '../data/context';
 import { download } from '../export/report';
 
@@ -48,6 +49,11 @@ export function Settings() {
     <div className="settings">
       <h2>הגדרות</h2>
 
+      <section className="card" id="sync">
+        <h3>חשבון וסנכרון</h3>
+        <SyncPanel />
+      </section>
+
       <section className="card">
         <h3>כללי</h3>
         <label>
@@ -81,12 +87,6 @@ export function Settings() {
         />
       </section>
 
-      <section className="card">
-        <h3>סנכרון ענן</h3>
-        <p className="muted small-text">
-          הנתונים נשמרים כרגע במכשיר זה בלבד. סנכרון בין מכשירים (Supabase) יתווסף בשלב הבא.
-        </p>
-      </section>
 
       <p className="muted small-text center">גרסה {__APP_VERSION__}</p>
     </div>

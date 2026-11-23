@@ -20,7 +20,15 @@ src/export/     PDF / XLSX / CSV (UTF-8 BOM)
 הממשק עובד רק מול `TimeClockService`/`DataAdapter`, כך שסנכרון ענן יתווסף כמימוש נוסף של ה-Adapter.
 לכל רשומה: `id` (UUID), `createdAt`, `updatedAt`, `deleted` (מחיקה רכה) — בסיס ל-Last-Write-Wins בסנכרון.
 
+## ענן (Supabase)
+1. להריץ את `supabase/schema.sql` ב-SQL Editor של הפרויקט (פעם אחת).
+2. להגדיר את ה-Publishable key ב-`src/config.ts` (או `VITE_SUPABASE_KEY` בזמן build).
+3. Authentication → URL Configuration: להגדיר Site URL לכתובת האפליקציה (לקישורי אימות מייל).
+
+סנכרון: כל שינוי נשמר מקומית ונכנס לתור; התור נדחף לענן כשיש חיבור, ושינויים מהענן נמשכים
+לפי `server_updated_at` (+ Realtime לעדכון מיידי). התנגשויות: הגרסה עם `updated_at` המאוחר גוברת (נאכף גם בשרת).
+
 ## שלבים
 1. ✅ PWA מקומית מלאה
-2. ⏳ Supabase: התחברות מייל+סיסמה, סנכרון, RLS
+2. ✅ Supabase: התחברות מייל+סיסמה, סנכרון, RLS (ממתין למפתח)
 3. ⏳ APK (Capacitor), התראות, עדכונים דרך GitHub Releases

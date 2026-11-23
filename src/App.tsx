@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SyncBadge } from './components/SyncPanel';
 import { useData } from './data/context';
 import { Employers } from './screens/Employers';
 import { Home } from './screens/Home';
@@ -41,7 +42,9 @@ export function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">שעון נוכחות</div>
+        <div className="brand">
+          שעון נוכחות <SyncBadge onClick={() => go('settings')} />
+        </div>
         {employers.length > 0 && (
           <select
             className="employer-select"
