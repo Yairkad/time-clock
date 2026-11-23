@@ -1,3 +1,4 @@
+import { Moon, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useData } from '../data/context';
 import {
@@ -111,7 +112,7 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
           <div className="preview">
             {crossesMidnight && (
               <div className="hint">
-                🌙 עובר חצות — יישמר כשני רישומים: {formatDate(interval.start)} {toTimeStr(interval.start)}–00:00
+                <Moon size={16} /> עובר חצות — יישמר כשני רישומים: {formatDate(interval.start)} {toTimeStr(interval.start)}–00:00
                 {' '}ו־{formatDate(interval.end!)} 00:00–{toTimeStr(interval.end!)}
               </div>
             )}
@@ -121,7 +122,7 @@ export function ShiftForm({ employerId, shift, onClose }: Props) {
             <div>
               שכר: <b>{formatMoney(previewWage)}</b>
             </div>
-            {overlaps.length > 0 && <div className="warn">⚠️ חופף ל־{overlaps.length} רישומים אחרים</div>}
+            {overlaps.length > 0 && <div className="warn"><TriangleAlert size={16} /> חופף ל־{overlaps.length} רישומים אחרים</div>}
           </div>
         )}
       </div>

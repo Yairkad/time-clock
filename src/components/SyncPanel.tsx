@@ -1,14 +1,26 @@
+import { Check, Cloud, CloudCheck, Hourglass, LogOut, RefreshCw, TriangleAlert, WifiOff, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSync } from '../data/context';
 import { formatDate, toTimeStr } from '../domain/calc';
 import { useDialogs } from './Dialogs';
 
 const STATE_LABEL: Record<string, string> = {
-  synced: '✅ מסונכרן',
-  syncing: '🔄 מסנכרן…',
-  offline: '📴 אין אינטרנט — השינויים יסונכרנו כשהחיבור יחזור',
-  error: '⚠️ שגיאת סנכרון',
+  synced: 'מסונכרן',
+  syncing: 'מסנכרן…',
+  offline: 'אין אינטרנט — השינויים יסונכרנו כשהחיבור יחזור',
+  error: 'שגיאת סנכרון',
 };
+const STATE_ICON: Record<string, LucideIcon> = { synced: Check, syncing: RefreshCw, offline: WifiOff, error: TriangleAlert };
+
+function StateLine({ state }: { state: string }) {
+  const Icon = STATE_ICON[state];
+  if (!Icon) return null;
+  return (
+    <div className={`state-line ${state}`}>
+      <Icon size={16} className={state === 'syncing' ? 'spin' : ''} /> {STATE_LABEL[state]}
+    </div>
+  );
+}
 
 export function SyncPanel() {
   const { sync, status } = useSync();
@@ -104,7 +116,7 @@ export function SyncPanel() {
       <div>
         מחובר כ־<b dir="ltr">{status.email}</b>
       </div>
-      <div>{STATE_LABEL[status.state] ?? ''}</div>
+      <StateLine state={status.state} />
       {status.error && <div className="muted small-text" dir="ltr">{status.error}</div>}
       {status.pending > 0 && <div className="muted small-text">{status.pending} שינויים ממתינים לסנכרון</div>}
       {status.lastSyncAt && (
@@ -113,8 +125,8 @@ export function SyncPanel() {
         </div>
       )}
       <div className="export-buttons">
-        <button className="btn" onClick={() => sync.sync()} disabled={status.state === 'syncing'}>🔄 סנכרן עכשיו</button>
-        <button className="btn" onClick={logout}>התנתקות</button>
+        <button className="btn" onClick={() => sync.sync()} disabled={status.state === 'syncing'}><RefreshCw size={16} /> סנכרן עכשיו</button>
+        <button className="btn" onClick={logout}><LogOut size={16} /> התנתקות</button>
       </div>
     </div>
   );
@@ -124,17 +136,17 @@ export function SyncPanel() {
 export function SyncBadge({ onClick }: { onClick: () => void }) {
   const { status } = useSync();
   if (status.state === 'disabled') return null;
-  const icon =
-    status.state === 'signed-out' ? '☁️' :
-    status.state === 'syncing' ? '🔄' :
-    status.state === 'offline' ? '📴' :
-    status.state === 'error' ? '⚠️' :
-    status.pending > 0 ? '⏳' : '✅';
+  const Icon: LucideIcon =
+    status.state === 'signed-out' ? Cloud :
+    status.state === 'syncing' ? RefreshCw :
+    status.state === 'offline' ? WifiOff :
+    status.state === 'error' ? TriangleAlert :
+    status.pending > 0 ? Hourglass : CloudCheck;
   const title =
     status.state === 'signed-out' ? 'לא מחובר — לחץ להתחברות' : STATE_LABEL[status.state] ?? '';
   return (
     <button className="sync-badge" onClick={onClick} title={title} aria-label={title}>
-      {icon}
+      <Icon size={18} className={status.state === 'syncing' ? 'spin' : ''} />
     </button>
   );
 }

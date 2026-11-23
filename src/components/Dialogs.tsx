@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 
 interface ConfirmOptions {
@@ -27,7 +28,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-head">
           <h2>{title}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="סגור">✕</button>
+          <button className="icon-btn" onClick={onClose} aria-label="סגור"><X size={20} /></button>
         </div>
         {children}
       </div>

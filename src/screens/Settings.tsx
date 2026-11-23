@@ -1,3 +1,4 @@
+import { Download, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDialogs } from '../components/Dialogs';
 import { SyncPanel } from '../components/SyncPanel';
@@ -50,7 +51,7 @@ export function Settings() {
     <div className="settings">
       <h2>הגדרות</h2>
 
-      <Employers autoOpen />
+      <Employers />
 
       <section className="card" id="sync">
         <h3>חשבון וסנכרון</h3>
@@ -73,8 +74,8 @@ export function Settings() {
         <h3>גיבוי ושחזור</h3>
         <p className="muted small-text">קובץ JSON הכולל מעסיקים, תעריפים, היסטוריית שעות, רישום פעיל והגדרות.</p>
         <div className="export-buttons">
-          <button className="btn primary" onClick={exportBackup}>⬇️ ייצוא גיבוי</button>
-          <button className="btn" onClick={() => fileRef.current?.click()}>⬆️ ייבוא גיבוי</button>
+          <button className="btn primary" onClick={exportBackup}><Download size={18} /> ייצוא גיבוי</button>
+          <button className="btn" onClick={() => fileRef.current?.click()}><Upload size={18} /> ייבוא גיבוי</button>
         </div>
         <input
           ref={fileRef}

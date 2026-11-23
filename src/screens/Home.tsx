@@ -1,5 +1,7 @@
+import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { OverlapList } from '../components/ShiftForm';
+import { EmployerForm } from './Employers';
 import { SummaryLine } from '../components/SummaryLine';
 import { useDialogs } from '../components/Dialogs';
 import { useActiveEmployer, useData, useNow } from '../data/context';
@@ -15,13 +17,18 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
   const active = service.activeShift();
   const now = useNow(1000, !!active);
   const [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   if (!employer) {
     return (
       <div className="empty">
-        <h2>ברוך הבא 👋</h2>
+        <h2>ברוך הבא</h2>
         <p>כדי להתחיל, יש להוסיף מעסיק ראשון.</p>
-        <button className="btn primary" onClick={goEmployers}>הוספת מעסיק</button>
+        <div className="welcome-actions">
+          <button className="btn primary" onClick={() => setAdding(true)}>הוספת מעסיק</button>
+          <button className="btn" onClick={goEmployers}>יש לי חשבון — התחברות</button>
+        </div>
+        {adding && <EmployerForm onClose={() => setAdding(false)} />}
       </div>
     );
   }
@@ -83,7 +90,7 @@ export function Home({ goEmployers }: { goEmployers: () => void }) {
             <div className="clock-rate">תעריף: {formatMoney(currentRate(employer))} לשעה</div>
             {activeElsewhere && (
               <div className="warn">
-                ⚠️ בעבודה כרגע אצל <b>{otherEmployer?.name}</b> מ־{toTimeStr(activeElsewhere.start)}
+                <TriangleAlert size={16} /> בעבודה כרגע אצל <b>{otherEmployer?.name}</b> מ־{toTimeStr(activeElsewhere.start)}
                 <button className="btn small" onClick={() => service.updateSettings({ activeEmployerId: activeElsewhere.employerId })}>
                   מעבר למעסיק זה
                 </button>

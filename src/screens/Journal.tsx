@@ -1,4 +1,6 @@
+import { Download, Plus, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import { ExportDialog } from '../components/ExportDialog';
 import { PeriodPicker, usePeriod } from '../components/PeriodPicker';
 import { ShiftForm } from '../components/ShiftForm';
 import { SummaryLine } from '../components/SummaryLine';
@@ -11,6 +13,7 @@ export function Journal() {
   const employer = useActiveEmployer();
   const [period, setPeriod] = usePeriod();
   const [form, setForm] = useState<{ shift?: Shift } | null>(null);
+  const [exporting, setExporting] = useState(false);
   const hasActive = !!service.activeShift();
   const now = useNow(30_000, hasActive);
 
@@ -24,7 +27,14 @@ export function Journal() {
     <div>
       <div className="toolbar">
         <h2>יומן שעות</h2>
-        <button className="btn primary" onClick={() => setForm({})}>+ הוספה ידנית</button>
+        <div className="toolbar-actions">
+          <button className="btn" onClick={() => setExporting(true)}>
+            <Download size={18} /> ייצוא
+          </button>
+          <button className="btn primary" onClick={() => setForm({})}>
+            <Plus size={18} /> הוספה ידנית
+          </button>
+        </div>
       </div>
       <PeriodPicker value={period} onChange={setPeriod} />
 
@@ -55,7 +65,7 @@ export function Journal() {
                   <td>{firstOfDay ? formatDate(s.start) : ''}</td>
                   <td>
                     {toTimeStr(s.start)}
-                    {overlap && <span className="dot-warn" title="חופף לרישום אחר">⚠</span>}
+                    {overlap && <TriangleAlert className="dot-warn" size={15} aria-label="חופף לרישום אחר" />}
                   </td>
                   <td>
                     {open ? <span className="live">עובד…</span> : toTimeStr(s.end!)}
@@ -76,6 +86,7 @@ export function Journal() {
         </table>
       )}
       {rows.length > 0 && <p className="muted small-text">לחיצה על שורה לעריכה או מחיקה.</p>}
+      {exporting && <ExportDialog employer={employer} period={period} shifts={shifts} onClose={() => setExporting(false)} />}
       {form && <ShiftForm employerId={employer.id} shift={form.shift} onClose={() => setForm(null)} />}
     </div>
   );

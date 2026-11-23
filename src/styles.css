@@ -225,3 +225,19 @@ input, select { font: inherit; }
 .row2 label { min-width: 0; }
 .toolbar h3 { margin: 0; }
 .small-btn { padding: 8px 12px; font-size: .9rem; }
+
+/* Vector icons */
+.btn, .icon-btn, .sync-badge { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.warn svg, .hint svg, .state-line svg { vertical-align: -3px; margin-inline-end: 4px; }
+.state-line { display: flex; align-items: center; gap: 4px; }
+.state-line.synced { color: #15803d; }
+.state-line.error { color: var(--danger); }
+.toolbar-actions { display: flex; gap: 8px; }
+.toolbar-actions .btn { padding: 9px 12px; }
+.dot-warn { color: #d97706; vertical-align: -2px; margin-inline-start: 4px; }
+.sync-badge { color: #fff; padding: 4px 6px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.icon-btn { color: var(--muted); }
+.icon-btn:hover { color: var(--text); }
+.welcome-actions { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }

@@ -1,15 +1,16 @@
+import { Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Modal, useDialogs } from '../components/Dialogs';
 import { useData } from '../data/context';
 import { currentRate, dateKeyToDisplay, formatMoney, sortRates, toDateKey } from '../domain/calc';
 import type { Employer } from '../domain/types';
 
-export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
+export function Employers() {
   const { service } = useData();
   const { confirm, toast } = useDialogs();
   const employers = service.employers();
   const activeId = service.settings().activeEmployerId;
-  const [form, setForm] = useState<{ employer?: Employer } | null>(autoOpen && employers.length === 0 ? {} : null);
+  const [form, setForm] = useState<{ employer?: Employer } | null>(null);
 
   const remove = async (e: Employer) => {
     const count = service.shifts(e.id).length;
@@ -19,7 +20,7 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
       message: (
         <>
           <p>פעולה זו תמחק את המעסיק ואת כל היסטוריית השעות שלו ({count} רישומים).</p>
-          {active && <p className="warn">⚠️ קיים רישום פעיל אצל מעסיק זה.</p>}
+          {active && <p className="warn"><TriangleAlert size={16} /> קיים רישום פעיל אצל מעסיק זה.</p>}
           <p>מומלץ לייצא גיבוי לפני המחיקה.</p>
         </>
       ),
@@ -37,7 +38,7 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
     <section className="card">
       <div className="toolbar">
         <h3>מעסיקים ותעריפים</h3>
-        <button className="btn primary small-btn" onClick={() => setForm({})}>+ מעסיק חדש</button>
+        <button className="btn primary small-btn" onClick={() => setForm({})}><Plus size={16} /> מעסיק חדש</button>
       </div>
       {employers.length === 0 && <div className="empty small">עדיין לא הוגדרו מעסיקים.</div>}
       <ul className="list">
@@ -49,8 +50,8 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
                 {e.employeeName || 'ללא שם עובד'} · {formatMoney(currentRate(e))} לשעה
               </div>
             </button>
-            <button className="icon-btn" onClick={() => setForm({ employer: e })} aria-label="עריכה">✏️</button>
-            <button className="icon-btn" onClick={() => remove(e)} aria-label="מחיקה">🗑️</button>
+            <button className="icon-btn" onClick={() => setForm({ employer: e })} aria-label="עריכה"><Pencil size={18} /></button>
+            <button className="icon-btn" onClick={() => remove(e)} aria-label="מחיקה"><Trash2 size={18} /></button>
           </li>
         ))}
       </ul>
@@ -59,7 +60,7 @@ export function Employers({ autoOpen = false }: { autoOpen?: boolean }) {
   );
 }
 
-function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () => void }) {
+export function EmployerForm({ employer, onClose }: { employer?: Employer; onClose: () => void }) {
   const { service } = useData();
   const { toast, confirm } = useDialogs();
   const today = toDateKey(Date.now());

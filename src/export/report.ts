@@ -176,7 +176,7 @@ export async function exportPdf(input: ReportInput) {
       if (i > 0) pdf.addPage();
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
     }
-    pdf.save(`${fileBase(input)}.pdf`);
+    download(pdf.output('blob'), `${fileBase(input)}.pdf`);
   } finally {
     host.remove();
   }

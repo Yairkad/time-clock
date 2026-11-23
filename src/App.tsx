@@ -1,16 +1,15 @@
+import { CalendarDays, Clock, Settings as SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SyncBadge } from './components/SyncPanel';
 import { useData } from './data/context';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
-import { Reports } from './screens/Reports';
 import { Settings } from './screens/Settings';
 
 const TABS = [
-  { id: 'home', label: 'ראשי', icon: '⏱️' },
-  { id: 'journal', label: 'יומן', icon: '📅' },
-  { id: 'reports', label: 'דוחות', icon: '📊' },
-  { id: 'settings', label: 'הגדרות', icon: '⚙️' },
+  { id: 'home', label: 'ראשי', Icon: Clock },
+  { id: 'journal', label: 'יומן', Icon: CalendarDays },
+  { id: 'settings', label: 'הגדרות', Icon: SettingsIcon },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
@@ -62,7 +61,7 @@ export function App() {
       <nav className="tabs">
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => go(t.id)}>
-            <span className="tab-icon">{t.icon}</span>
+            <t.Icon className="tab-icon" size={22} strokeWidth={t.id === tab ? 2.4 : 1.8} />
             <span>{t.label}</span>
           </button>
         ))}
@@ -71,7 +70,6 @@ export function App() {
       <main className="content">
         {tab === 'home' && <Home goEmployers={() => go('settings')} />}
         {tab === 'journal' && <Journal />}
-        {tab === 'reports' && <Reports />}
         {tab === 'settings' && <Settings />}
       </main>
     </div>
