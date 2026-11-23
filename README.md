@@ -2,6 +2,10 @@
 
 מערכת אישית לניהול שעות עבודה למספר מעבידים. Offline-First, PWA (ובהמשך APK דרך Capacitor + סנכרון Supabase).
 
+## כתובות
+- אתר (PWA): https://yairkad.github.io/time-clock/
+- APK: https://github.com/Yairkad/time-clock/releases/latest
+
 ## הרצה
 ```bash
 npm install
