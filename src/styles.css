@@ -241,3 +241,9 @@ input, select { font: inherit; }
 .icon-btn { color: var(--muted); }
 .icon-btn:hover { color: var(--text); }
 .welcome-actions { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
+.hours tr.day-head td { background: #ecfdf5; color: #0f766e; font-weight: 700; border-top: 1px solid #d1fae5; padding: 8px 10px; }
+.hours tr.day-head td.total { color: #0f766e; }
+.hours tr.entry td { border-top: 1px solid #f1f3f5; }
+.hours tr.entry:hover { background: #f9fafb; }
+.hours tr.entry.open { background: #f0fdf4; }
+.hours tbody tr.day-head { cursor: default; }
