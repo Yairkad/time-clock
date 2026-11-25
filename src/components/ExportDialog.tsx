@@ -11,9 +11,10 @@ export function ExportDialog({ employer, period, shifts, onClose }: {
 }) {
   const { toast } = useDialogs();
   const [includeWage, setIncludeWage] = useState(true);
+  const [detailed, setDetailed] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const closed = shifts.filter((s) => s.end !== null);
-  const input: ReportInput = { employer, period, shifts: closed, includeWage };
+  const input: ReportInput = { employer, period, shifts: closed, includeWage, detailed };
 
   const run = async (kind: string, fn: () => unknown) => {
     setBusy(kind);
@@ -36,6 +37,11 @@ export function ExportDialog({ employer, period, shifts, onClose }: {
         <input type="checkbox" checked={includeWage} onChange={(e) => setIncludeWage(e.target.checked)} />
         כולל חישוב שכר
       </label>
+      <label className="check">
+        <input type="checkbox" checked={detailed} onChange={(e) => setDetailed(e.target.checked)} />
+        כולל פירוט כניסה/יציאה
+      </label>
+      <p className="muted small-text">{detailed ? 'כל רישום בשורה, עם סה"כ ליום.' : 'שורה אחת לכל יום: סה"כ שעות.'}</p>
       <div className="export-buttons">
         <button className="btn primary" disabled={!!busy} onClick={() => run('pdf', () => exportPdf(input))}>
           <FileText size={18} /> {busy === 'pdf' ? 'מפיק…' : 'PDF'}

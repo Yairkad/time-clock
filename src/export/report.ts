@@ -1,6 +1,7 @@
 import { saveFile } from '../native/files';
 import {
   formatDate, formatDecimalHours, formatHM, formatMoney, groupByDay, periodLabel, toDateKey, toTimeStr, totals,
+  weekdayHe,
 } from '../domain/calc';
 import type { Employer, Period, Shift } from '../domain/types';
 
@@ -10,17 +11,54 @@ export interface ReportInput {
   /** Closed shifts in the period. */
   shifts: Shift[];
   includeWage: boolean;
+  /** true: every start/end entry; false: one row per day. */
+  detailed: boolean;
 }
 
-export function reportRows(input: ReportInput) {
-  return groupByDay(input.shifts.filter((s) => s.end !== null), 'asc').map(({ shift: s, firstOfDay, dayTotalMs, dayWage }) => ({
-    date: firstOfDay ? formatDate(s.start) : '',
-    start: toTimeStr(s.start),
-    end: toTimeStr(s.end!) + (toDateKey(s.end! - 1) !== toDateKey(s.start) ? ' (+1)' : ''),
-    dayTotal: dayTotalMs !== undefined ? formatHM(dayTotalMs) : '',
-    dayDecimal: dayTotalMs !== undefined ? Number(formatDecimalHours(dayTotalMs)) : '',
-    dayWage: dayWage !== undefined ? Math.round(dayWage * 100) / 100 : '',
-  }));
+type Cell = string | number;
+type Col = { title: string; kind?: 'decimal' | 'money' | 'strong' };
+interface Table {
+  cols: Col[];
+  rows: Cell[][];
+  /** Row starts a new day (for the PDF divider). */
+  dayStart: boolean[];
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** The report table, in detailed (entry) or daily-summary form. */
+export function reportTable(input: ReportInput): Table {
+  const w = input.includeWage;
+  const grouped = groupByDay(input.shifts.filter((s) => s.end !== null), 'asc');
+  if (!input.detailed) {
+    const days = grouped.filter((g) => g.dayTotalMs !== undefined);
+    return {
+      cols: [
+        { title: 'תאריך' }, { title: 'יום' }, { title: 'סה"כ שעות', kind: 'strong' }, { title: 'שעות עשרוניות', kind: 'decimal' },
+        ...(w ? [{ title: 'שכר', kind: 'money' } as Col] : []),
+      ],
+      rows: days.map((g) => [
+        formatDate(g.shift.start), weekdayHe(g.shift.start), formatHM(g.dayTotalMs!), Number(formatDecimalHours(g.dayTotalMs!)),
+        ...(w ? [round2(g.dayWage!)] : []),
+      ]),
+      dayStart: days.map(() => true),
+    };
+  }
+  return {
+    cols: [
+      { title: 'תאריך' }, { title: 'התחלה' }, { title: 'סיום' }, { title: 'סה"כ ליום', kind: 'strong' },
+      { title: 'שעות עשרוניות', kind: 'decimal' }, ...(w ? [{ title: 'שכר ליום', kind: 'money' } as Col] : []),
+    ],
+    rows: grouped.map(({ shift: s, firstOfDay, dayTotalMs, dayWage }) => [
+      firstOfDay ? `${weekdayHe(s.start)} ${formatDate(s.start)}` : '',
+      toTimeStr(s.start),
+      toTimeStr(s.end!) + (toDateKey(s.end! - 1) !== toDateKey(s.start) ? ' (+1)' : ''),
+      dayTotalMs !== undefined ? formatHM(dayTotalMs) : '',
+      dayTotalMs !== undefined ? Number(formatDecimalHours(dayTotalMs)) : '',
+      ...(w ? [dayWage !== undefined ? round2(dayWage) : ''] : []),
+    ]),
+    dayStart: grouped.map((g) => g.firstOfDay),
+  };
 }
 
 export function fileBase(input: ReportInput) {
@@ -32,12 +70,9 @@ export function download(blob: Blob, filename: string) {
   return saveFile(blob, filename);
 }
 
-const HEADERS = (w: boolean) => ['תאריך', 'התחלה', 'סיום', 'סה"כ ליום', 'שעות עשרוניות', ...(w ? ['שכר ליום'] : [])];
-
-function tableRows(input: ReportInput): (string | number)[][] {
-  return reportRows(input).map((r) => [
-    r.date, r.start, r.end, r.dayTotal, r.dayDecimal, ...(input.includeWage ? [r.dayWage] : []),
-  ]);
+function sheetRows(input: ReportInput): Cell[][] {
+  const t = reportTable(input);
+  return [t.cols.map((c) => c.title), ...t.rows];
 }
 
 function summaryRows(input: ReportInput): (string | number)[][] {
@@ -67,20 +102,19 @@ export async function exportCsv(input: ReportInput) {
   const lines = [
     ...headerRows(input),
     [],
-    HEADERS(input.includeWage),
-    ...tableRows(input),
+    ...sheetRows(input),
     [],
     ...summaryRows(input),
   ].map((r) => r.map(csvCell).join(','));
   // UTF-8 BOM so Excel detects Hebrew correctly.
-  download(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `${fileBase(input)}.csv`);
+  await download(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `${fileBase(input)}.csv`);
 }
 
 export async function exportXlsx(input: ReportInput) {
   const XLSX = await import('xlsx');
-  const aoa = [...headerRows(input), [], HEADERS(input.includeWage), ...tableRows(input), [], ...summaryRows(input)];
+  const aoa = [...headerRows(input), [], ...sheetRows(input), [], ...summaryRows(input)];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = HEADERS(input.includeWage).map(() => ({ wch: 14 }));
+  ws['!cols'] = reportTable(input).cols.map(() => ({ wch: 15 }));
   const wb = XLSX.utils.book_new();
   wb.Workbook = { Views: [{ RTL: true }] };
   XLSX.utils.book_append_sheet(wb, ws, 'דוח שעות');
@@ -99,9 +133,17 @@ const ROWS_PER_PAGE = 30;
 
 /** Builds printable A4 page elements (RTL HTML) for the report. */
 function buildPages(input: ReportInput): HTMLElement[] {
-  const rows = reportRows(input);
+  const table = reportTable(input);
+  const rows = table.rows.map((cells, i) => ({ cells, dayStart: table.dayStart[i] }));
   const t = totals(input.shifts);
   const w = input.includeWage;
+  const fmt = (v: Cell, col: Col) => {
+    if (v === '') return '';
+    if (col.kind === 'money') return esc(formatMoney(Number(v)));
+    if (col.kind === 'decimal') return Number(v).toFixed(2);
+    if (col.kind === 'strong') return `<b>${esc(v)}</b>`;
+    return esc(v);
+  };
   const chunks: typeof rows[] = [];
   let i = 0;
   chunks.push(rows.slice(0, ROWS_FIRST_PAGE));
@@ -124,17 +166,12 @@ function buildPages(input: ReportInput): HTMLElement[] {
           <tr><th>תקופה</th><td>${esc(periodLabel(input.period))}</td></tr>
         </table>` : ''}
       <table class="pdf-table">
-        <thead><tr>
-          <th>תאריך</th><th>התחלה</th><th>סיום</th><th>סה"כ ליום</th><th>עשרוני</th>
-          ${w ? '<th>שכר ליום</th>' : ''}
-        </tr></thead>
+        <thead><tr>${table.cols.map((c) => `<th>${esc(c.title)}</th>`).join('')}</tr></thead>
         <tbody>
-          ${chunk.map((r) => `<tr class="${r.date ? 'day-start' : ''}">
-            <td>${esc(r.date)}</td><td>${esc(r.start)}</td><td>${esc(r.end)}</td>
-            <td><b>${esc(r.dayTotal)}</b></td><td>${typeof r.dayDecimal === 'number' ? r.dayDecimal.toFixed(2) : ''}</td>
-            ${w ? `<td>${typeof r.dayWage === 'number' ? esc(formatMoney(r.dayWage)) : ''}</td>` : ''}
+          ${chunk.map((r) => `<tr class="${r.dayStart ? 'day-start' : ''}">
+            ${r.cells.map((v, ci) => `<td>${fmt(v, table.cols[ci])}</td>`).join('')}
           </tr>`).join('')}
-          ${chunk.length === 0 ? `<tr><td colspan="${w ? 6 : 5}">אין רישומים בתקופה</td></tr>` : ''}
+          ${chunk.length === 0 ? `<tr><td colspan="${table.cols.length}">אין רישומים בתקופה</td></tr>` : ''}
         </tbody>
       </table>
       ${last ? `

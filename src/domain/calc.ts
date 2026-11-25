@@ -26,6 +26,12 @@ export function toTimeStr(ms: number): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+const HEB_WEEKDAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+/** Hebrew weekday letter, e.g. "ב׳". */
+export function weekdayHe(ms: number): string {
+  return HEB_WEEKDAYS[new Date(ms).getDay()];
+}
+
 /** DD/MM/YY */
 export function formatDate(ms: number): string {
   const d = new Date(ms);
