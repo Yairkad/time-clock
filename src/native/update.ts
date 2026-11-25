@@ -32,8 +32,35 @@ export async function checkForUpdate(): Promise<UpdateInfo | null> {
   }
 }
 
-/** Opens the APK download; Android then offers to install it over the current version. */
-export async function openUpdate(url: string) {
+/**
+ * Downloads the APK inside the app (with progress) and opens Android's installer.
+ * Falls back to the browser download if anything fails.
+ */
+export async function downloadAndInstall(url: string, onProgress: (fraction: number | null) => void) {
+  const [{ Filesystem, Directory }, { FileTransfer }, { FileOpener }] = await Promise.all([
+    import('@capacitor/filesystem'),
+    import('@capacitor/file-transfer'),
+    import('@capacitor-community/file-opener'),
+  ]);
+  const target = await Filesystem.getUri({ directory: Directory.Cache, path: 'time-clock-update.apk' });
+  const listener = await FileTransfer.addListener('progress', (p) => {
+    onProgress(p.lengthComputable && p.contentLength > 0 ? p.bytes / p.contentLength : null);
+  });
+  try {
+    const res = await FileTransfer.downloadFile({ url, path: target.uri, progress: true });
+    onProgress(1);
+    await FileOpener.open({
+      filePath: res.path ?? target.uri,
+      contentType: 'application/vnd.android.package-archive',
+      openWithDefault: true,
+    });
+  } finally {
+    await listener.remove();
+  }
+}
+
+/** Fallback: let the browser download the APK. */
+export async function openUpdateInBrowser(url: string) {
   const { Browser } = await import('@capacitor/browser');
   await Browser.open({ url });
 }

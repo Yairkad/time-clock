@@ -247,3 +247,11 @@ input, select { font: inherit; }
 .hours tr.entry:hover { background: #f9fafb; }
 .hours tr.entry.open { background: #f0fdf4; }
 .hours tbody tr.day-head { cursor: default; }
+
+/* In-app update */
+.update { text-align: center; }
+.update-icon { width: 56px; height: 56px; border-radius: 50%; background: #ccfbf1; color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 4px auto 8px; }
+.progress { height: 10px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin: 14px 0 6px; }
+.progress > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 99px; transition: width .2s; }
+.progress.indeterminate > div { animation: indet 1.2s ease-in-out infinite; }
+@keyframes indet { 0% { margin-inline-start: -40%; } 100% { margin-inline-start: 100%; } }
